@@ -1,0 +1,862 @@
+<title>Lightning Strike — Prototype v0.3</title>
+<style>
+  :root{
+    --bg:#070a12; --bg2:#0c1120; --panel:#111a2e; --panel2:#0e1526;
+    --line:#22314f; --line2:#2f4570; --ink:#cdd8f2; --dim:#6f81a8;
+    --cyan:#22e0ff; --cyan-dim:#0c7f96; --mag:#ff2e88; --amber:#ffd23e;
+    --lime:#7dff6b; --red:#ff5a5a; --violet:#b98cff;
+    --mono:ui-monospace,"Cascadia Mono","Cascadia Code",Menlo,Consolas,"DejaVu Sans Mono",monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{background:radial-gradient(1200px 600px at 50% -10%, #14203a 0%, transparent 60%), var(--bg);
+    color:var(--ink); font-family:var(--mono); font-size:14px; line-height:1.45; -webkit-font-smoothing:antialiased; overflow-x:hidden;}
+  body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;
+    background:repeating-linear-gradient(0deg, rgba(0,0,0,0.16) 0 1px, transparent 1px 3px);mix-blend-mode:multiply;opacity:.45;}
+  .wrap{max-width:1080px;margin:0 auto;padding:20px 16px 60px}
+  .mast{display:flex;align-items:baseline;justify-content:space-between;gap:16px;border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:16px;flex-wrap:wrap}
+  .logo{font-weight:800;font-size:25px;letter-spacing:.14em;margin:0;color:var(--amber);text-shadow:0 0 16px rgba(255,210,62,.5)}
+  .logo .b{color:var(--cyan);text-shadow:0 0 16px rgba(34,224,255,.5)}
+  .tagline{color:var(--dim);letter-spacing:.16em;text-transform:uppercase;font-size:11px}
+  .phasebadge{border:1px solid var(--line2);color:var(--dim);padding:3px 9px;border-radius:2px;font-size:10px;letter-spacing:.16em;text-transform:uppercase}
+  .mastright{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+  .infobtn{padding:7px 13px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;border-radius:4px;cursor:pointer;font-family:var(--mono);font-weight:700;border:1px solid var(--cyan);background:rgba(34,224,255,.08);color:var(--cyan);transition:.15s}
+  .infobtn:hover{box-shadow:0 0 14px rgba(34,224,255,.3)}
+  /* info modal */
+  .infomodal{position:fixed;inset:0;z-index:10000;display:none;align-items:flex-start;justify-content:center;padding:36px 16px;background:rgba(3,6,14,.82);overflow-y:auto}
+  .infomodal.open{display:flex;animation:fade .25s ease}
+  .infopanel{max-width:660px;width:100%;background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--cyan-dim);border-radius:8px;padding:26px 26px 22px;box-shadow:0 0 44px rgba(34,224,255,.16);position:relative}
+  .infopanel h2.it{font-size:22px;letter-spacing:.1em;margin:0 0 2px;color:var(--amber);text-shadow:0 0 16px rgba(255,210,62,.4)}
+  .infopanel .isub{color:var(--dim);font-size:11px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:16px}
+  .infosec{border-top:1px solid var(--line);padding-top:12px;margin-top:14px}
+  .infosec h3{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--cyan);margin:0 0 6px}
+  .infosec p,.infosec li{font-size:12.5px;color:var(--ink);margin:5px 0}
+  .infosec ul{margin:4px 0;padding-left:18px} .infosec li{margin:4px 0}
+  .infosec b{color:var(--amber)} .infosec .cyk{color:var(--cyan)}
+  .infoclose{position:absolute;top:12px;right:14px;background:none;border:1px solid var(--line2);color:var(--dim);border-radius:4px;width:30px;height:30px;cursor:pointer;font-family:var(--mono);font-size:16px;line-height:1}
+  .infoclose:hover{border-color:var(--cyan);color:var(--cyan)}
+  .infocta{margin-top:20px;display:flex;justify-content:flex-end}
+  .screen{display:none} .screen.active{display:block;animation:fade .3s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){.screen.active{animation:none}*{transition:none!important;animation-duration:.001s!important}}
+  h2.head{font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);margin:0 0 10px;font-weight:700}
+  .panel{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:6px;padding:16px}
+
+  /* GARAGE */
+  .garage{display:grid;grid-template-columns:1fr 1.1fr;gap:16px}
+  @media (max-width:840px){.garage{grid-template-columns:1fr}}
+  .frame{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px}
+  .slotbtn{border:1px solid var(--line);border-radius:5px;background:var(--panel2);padding:9px 8px;cursor:pointer;text-align:center;transition:.14s;min-height:64px;display:flex;flex-direction:column;justify-content:center}
+  .slotbtn:hover{border-color:var(--line2)} .slotbtn.sel{border-color:var(--cyan);box-shadow:0 0 12px rgba(34,224,255,.22);background:rgba(34,224,255,.06)}
+  .slotbtn .sl{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+  .slotbtn .eq{font-size:11px;color:var(--ink);margin-top:3px;font-weight:700} .slotbtn .eq.empty{color:var(--dim);font-weight:400}
+  .slotbtn .hp{font-size:9px;color:var(--lime);margin-top:2px} .slotbtn.core .hp{color:var(--cyan)}
+  .slotbtn .ab{font-size:9px;color:var(--amber);margin-top:1px}
+  .fr-head{grid-column:2} .fr-bp{grid-column:3;grid-row:1}
+  .fr-rarm{grid-column:1;grid-row:2} .fr-core{grid-column:2;grid-row:2} .fr-larm{grid-column:3;grid-row:2}
+  .fr-legs{grid-column:2;grid-row:3}
+  .stat{display:grid;grid-template-columns:74px 1fr 62px;align-items:center;gap:10px;margin:6px 0}
+  .stat .lbl{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+  .track{height:9px;background:#0a1120;border:1px solid var(--line);border-radius:2px;position:relative;overflow:hidden}
+  .fill{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,var(--cyan-dim),var(--cyan));box-shadow:0 0 8px rgba(34,224,255,.4) inset;transition:width .18s ease}
+  .fill.up{background:linear-gradient(90deg,var(--cyan),var(--lime))}
+  .ghost{position:absolute;top:0;bottom:0;border-right:2px dashed var(--amber);opacity:.9}
+  .val{font-variant-numeric:tabular-nums;text-align:right;font-size:12px}
+  .val .delta{font-size:11px;margin-left:5px} .delta.pos{color:var(--lime)} .delta.neg{color:var(--red)}
+  .tactics{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
+  .tacrow{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;margin:8px 0}
+  .tacrow .an{font-size:12px}
+  .tacrow .an .tag{font-size:9px;letter-spacing:.1em;text-transform:uppercase;padding:1px 5px;border-radius:2px;border:1px solid var(--line2);color:var(--dim);margin-right:6px}
+  .tacrow .an .slotname{color:var(--dim);font-size:10px}
+  .tacsel{display:flex;gap:6px}
+  select{font-family:var(--mono);font-size:11px;background:var(--panel2);color:var(--ink);border:1px solid var(--line2);border-radius:3px;padding:5px 6px}
+  select.aim{border-color:rgba(255,210,62,.4);color:var(--amber)}
+  .tac-empty{color:var(--dim);font-size:11px}
+  .parts{display:flex;flex-direction:column;gap:8px;max-height:520px;overflow-y:auto;padding-right:4px}
+  .part{border:1px solid var(--line);border-radius:5px;padding:10px 12px;cursor:pointer;background:var(--panel2);transition:.14s;position:relative}
+  .part:hover{border-color:var(--cyan);background:rgba(34,224,255,.05)} .part.equipped{border-color:var(--lime);box-shadow:inset 0 0 0 1px rgba(125,255,107,.25)}
+  .part .pn{font-weight:700;color:var(--ink)} .part .arch{font-size:9px;letter-spacing:.12em;text-transform:uppercase;padding:2px 6px;border-radius:2px;border:1px solid var(--line2);color:var(--dim);float:right}
+  .part .abil{font-size:11px;color:var(--amber);margin-top:5px} .part .abil .ai{color:var(--dim)}
+  .part .abil.broken{color:var(--dim)} .part .abil.broken b{color:var(--amber)}
+  .part .chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
+  .chip{font-size:10px;font-variant-numeric:tabular-nums;padding:1px 6px;border-radius:2px;border:1px solid var(--line);color:var(--ink)}
+  .chip.pos{color:var(--lime);border-color:rgba(125,255,107,.3)} .chip.neg{color:var(--red);border-color:rgba(255,90,90,.3)} .chip.hp{color:var(--cyan);border-color:rgba(34,224,255,.3)}
+  .part .cross{position:absolute;top:9px;right:74px;font-size:9px;color:var(--amber)}
+  .btnrow{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+  .btn{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;padding:11px 18px;border-radius:4px;cursor:pointer;border:1px solid var(--line2);background:var(--panel2);color:var(--ink);transition:.15s;font-weight:700}
+  .btn:hover{border-color:var(--cyan);color:var(--cyan)}
+  .btn.primary{background:linear-gradient(180deg,rgba(255,210,62,.18),rgba(255,210,62,.05));border-color:var(--amber);color:var(--amber);text-shadow:0 0 8px rgba(255,210,62,.4)}
+  .btn.primary:hover{box-shadow:0 0 18px rgba(255,210,62,.25)} .btn.ghostbtn{background:transparent;border-color:var(--line)}
+  .btn:disabled{opacity:.4;cursor:not-allowed;border-color:var(--line);color:var(--dim)}
+  .warn{color:var(--amber);font-size:11px;margin-top:8px;min-height:16px}
+
+  /* MISSIONS */
+  .missions{display:grid;grid-template-columns:repeat(2,1fr);gap:14px} @media (max-width:680px){.missions{grid-template-columns:1fr}}
+  .mcard{border:1px solid var(--line);border-radius:6px;padding:16px;background:var(--panel2);cursor:pointer;transition:.15s}
+  .mcard:hover{border-color:var(--cyan);box-shadow:0 0 18px rgba(34,224,255,.14);transform:translateY(-2px)}
+  .mcard .mno{font-size:10px;letter-spacing:.2em;color:var(--dim)} .mcard .mt{font-size:17px;font-weight:800;letter-spacing:.05em;margin:4px 0 8px;color:var(--cyan)}
+  .mcard .md{font-size:12px;color:var(--dim);min-height:52px} .mcard .enc{font-size:10px;color:var(--dim);margin-top:10px}
+  .diff{display:inline-flex;gap:3px;margin-top:10px} .pip{width:9px;height:9px;border-radius:1px;border:1px solid var(--line2)} .pip.on{background:var(--mag);border-color:var(--mag);box-shadow:0 0 6px rgba(255,46,136,.6)}
+
+  /* LANE */
+  .lanewrap{display:grid;grid-template-columns:1fr 330px;gap:16px} @media (max-width:820px){.lanewrap{grid-template-columns:1fr}}
+  .lanetrack{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:6px 0 16px}
+  .node{border:1px solid var(--line2);border-radius:5px;padding:9px 12px;background:var(--panel2);min-width:118px}
+  .node.done{opacity:.5;border-color:var(--lime)} .node.cur{border-color:var(--amber);box-shadow:0 0 14px rgba(255,210,62,.25)}
+  .node .nk{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)} .node .nn{font-size:12px;font-weight:700;margin-top:2px} .node .nthreat{font-size:10px;color:var(--mag);margin-top:3px}
+  .arrow{color:var(--dim)}
+  .mlabel{display:flex;justify-content:space-between;font-size:10px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px} .mlabel .l{color:var(--cyan)} .mlabel.light .l{color:var(--amber)}
+  .bigtrack{height:14px;border:1px solid var(--line2);border-radius:3px;background:#0a1120;position:relative;overflow:hidden}
+  .bigfill{position:absolute;inset:0 auto 0 0;transition:width .3s ease} .bigfill.core{background:linear-gradient(90deg,#0c7f96,var(--cyan));box-shadow:0 0 8px rgba(34,224,255,.4) inset} .bigfill.light{background:linear-gradient(90deg,#8a6a00,var(--amber));box-shadow:0 0 8px rgba(255,210,62,.4) inset}
+  .lanestrip{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 4px}
+  .laneact{display:flex;flex-direction:column;gap:9px;margin-top:14px}
+  .laneact .btn{width:100%;text-align:left;display:flex;justify-content:space-between;align-items:center}
+  .cost{color:var(--amber);font-size:11px}
+  .repairpick{border:1px solid var(--line2);border-radius:5px;padding:10px;margin-top:6px;background:var(--panel2)}
+  .repairpick .pb{display:block;width:100%;text-align:left;margin:5px 0;background:var(--panel);border:1px solid var(--line);border-radius:3px;color:var(--ink);padding:7px 9px;cursor:pointer;font-family:var(--mono);font-size:11px}
+  .repairpick .pb:hover{border-color:var(--amber)}
+  .prebuffnote{color:var(--lime);font-size:11px;margin-top:6px}
+
+  /* part chips (shared: lane + skirmish) */
+  .pchip{position:relative;font-size:9px;letter-spacing:.02em;border:1px solid var(--line);border-radius:3px;padding:3px 6px 5px;min-width:46px;background:#0a1120;overflow:hidden;text-align:center}
+  .pchip .pcl{color:var(--dim)} .pchip .pcv{color:var(--ink);font-variant-numeric:tabular-nums;font-size:9px}
+  .pchip .pcfill{position:absolute;left:0;right:0;bottom:0;height:3px;background:var(--lime);transition:width .3s ease}
+  .pchip.core{border-color:var(--cyan-dim)} .pchip.core .pcfill{background:var(--cyan)}
+  .pchip.weapon .pcl{color:var(--amber)}
+  .pchip.hurt .pcfill{background:var(--amber)}
+  .pchip.disabled{opacity:.5;border-color:var(--red)} .pchip.disabled .pcl,.pchip.disabled .pcv{color:var(--red)} .pchip.disabled .pcfill{background:var(--red)}
+  .pchip.degraded{border-color:var(--amber);box-shadow:0 0 8px rgba(255,210,62,.25) inset} .pchip.degraded .pcl{color:var(--amber)}
+
+  /* SKIRMISH */
+  .arena{border:1px solid var(--line);border-radius:6px;background:var(--bg2);overflow:hidden}
+  .atop{display:flex;justify-content:space-between;padding:8px 14px;border-bottom:1px solid var(--line);font-size:11px;color:var(--dim);letter-spacing:.1em} .atop .an{color:var(--cyan);text-transform:uppercase;letter-spacing:.14em}
+  .banner{min-height:34px;text-align:center;padding:7px 12px;border-bottom:1px solid var(--line);letter-spacing:.05em;font-weight:700;color:var(--amber);background:rgba(255,210,62,.05)}
+  .banner .rd{color:var(--dim);font-weight:400;margin-right:8px;letter-spacing:.14em}
+  .field{display:grid;grid-template-columns:1fr 34px 1.25fr;gap:12px;padding:16px;min-height:210px;align-items:start} @media (max-width:680px){.field{grid-template-columns:1fr;gap:14px}}
+  .side{display:flex;flex-direction:column;gap:10px} .vs{text-align:center;color:var(--dim);font-weight:800;padding-top:30px}
+  .ucard{border:1px solid var(--line);border-radius:6px;padding:11px 12px;background:var(--panel2);position:relative;transition:.15s}
+  .ucard.player{border-color:var(--cyan-dim)} .ucard.dead{opacity:.32;filter:grayscale(.7)}
+  .ucard.acting{border-color:var(--amber);box-shadow:0 0 18px rgba(255,210,62,.35);transform:translateY(-2px)}
+  .ucard .un{font-weight:700;font-size:13px;display:flex;justify-content:space-between;align-items:baseline}
+  .ucard .utype{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+  .ucard .corebar{height:11px;border:1px solid var(--line);border-radius:2px;background:#0a1120;position:relative;overflow:hidden;margin-top:7px}
+  .ucard .corefill{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,#2a7d3a,var(--lime));transition:width .3s ease}
+  .ucard.enemy .corefill{background:linear-gradient(90deg,#7d2a4a,var(--mag))}
+  .ucard .corehp{font-size:10px;color:var(--ink);font-variant-numeric:tabular-nums}
+  .partstrip{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
+  .float{position:absolute;right:10px;top:4px;font-weight:800;font-size:15px;pointer-events:none;animation:floatup 1s ease forwards;text-shadow:0 0 8px currentColor}
+  @keyframes floatup{0%{opacity:0;transform:translateY(6px)}20%{opacity:1}100%{opacity:0;transform:translateY(-24px)}}
+  .acontrols{display:flex;gap:10px;padding:12px 14px;justify-content:flex-end;align-items:center}
+  .skirmend{text-align:center;padding:8px 0 2px} .skirmend .st{font-size:22px;font-weight:800;letter-spacing:.1em}
+  .st.win{color:var(--lime);text-shadow:0 0 16px rgba(125,255,107,.4)} .st.lose{color:var(--red);text-shadow:0 0 16px rgba(255,90,90,.4)}
+
+  /* RESULT */
+  .result{max-width:560px;margin:20px auto;text-align:center;border:1px solid var(--line);border-radius:8px;padding:28px 24px;background:var(--panel2)}
+  .rtitle{font-size:32px;font-weight:800;letter-spacing:.12em;margin:0 0 4px} .rtitle.win{color:var(--lime);text-shadow:0 0 20px rgba(125,255,107,.5)} .rtitle.lose{color:var(--red);text-shadow:0 0 20px rgba(255,90,90,.5)}
+  .rsub{color:var(--dim);letter-spacing:.12em;text-transform:uppercase;font-size:11px;margin-bottom:18px}
+  .rstats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:16px 0 6px} .rstat{border:1px solid var(--line);border-radius:5px;padding:12px}
+  .rstat .rv{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--cyan)} .rstat .rl{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-top:2px}
+  .hint{color:var(--dim);font-size:11px;margin-top:12px} .footnote{margin-top:30px;border-top:1px solid var(--line);padding-top:14px;color:var(--dim);font-size:11px}
+  .kbd{border:1px solid var(--line2);border-radius:2px;padding:0 5px;color:var(--ink);font-size:11px} b.cy{color:var(--cyan)} b.am{color:var(--amber)}
+</style>
+
+<div class="wrap">
+  <header class="mast">
+    <div><h1 class="logo">⚡ LIGHTNING <span class="b">STRIKE</span></h1>
+      <div class="tagline">Build the mech · aim at their parts · strike</div></div>
+    <div class="mastright">
+      <button class="infobtn" id="infoBtn">ℹ How to play</button>
+      <div class="phasebadge">Prototype v0.3 · part HP · single lane</div>
+    </div>
+  </header>
+
+  <!-- INFO / HOW TO PLAY -->
+  <div class="infomodal" id="infoModal">
+    <div class="infopanel">
+      <button class="infoclose" id="infoClose" aria-label="Close">×</button>
+      <h2 class="it">⚡ Lightning Strike</h2>
+      <div class="isub">A mech auto-battler · you build it, it fights itself</div>
+
+      <p>You never pilot your mech in a fight. You <b>build it</b> and set its instincts in the garage — then watch the battle resolve on its own. Your cleverness is decided <b>before</b> the shooting starts.</p>
+
+      <div class="infosec">
+        <h3>1 · Build a mech (6 parts)</h3>
+        <ul>
+          <li>Head, Core, two Arms, Backpack, Legs. Each part adds stats and often an <b>ability</b>; weapons always grant an attack.</li>
+          <li>Every part has its <b>own HP</b>. Your <span class="cyk">Core is your life</span> — lose it and the mech dies.</li>
+          <li>Knock out any other part and its ability goes dark. A downed <b>weapon</b> drops to a weak "broken" attack — never fully toothless.</li>
+        </ul>
+      </div>
+
+      <div class="infosec">
+        <h3>2 · Set its instincts (tactics)</h3>
+        <ul>
+          <li>Each ability gets a <b>firing rule</b> — e.g. "if I'm hurt", "target the weakest enemy".</li>
+          <li>Attacks also pick a <b>part to aim at</b>: the enemy's <span class="cyk">Core</span> (go for the kill) or a subsystem like their <b>Weapon</b> (disable it first). Once a targeted part is down, your fire shifts to the Core automatically.</li>
+        </ul>
+      </div>
+
+      <div class="infosec">
+        <h3>3 · Watch the fight (or skip it)</h3>
+        <ul>
+          <li>Combat plays out in rounds, hands-off. Watch it, or hit <b>Skip</b>. It's deterministic — same setup, same result.</li>
+          <li>Enemies are either <b>mechs/bosses</b> with targetable parts, or <b>monolithic</b> tanks/swarms with a single health pool.</li>
+        </ul>
+      </div>
+
+      <div class="infosec">
+        <h3>4 · Between fights — spend Lightning</h3>
+        <ul>
+          <li>Damage and knocked-out parts <b>carry over</b> down the lane. Bank <span class="cyk">⚡ Lightning</span> from winning, then spend it: <b>Repair</b> HP, <b>Full-Repair</b> a disabled part (the only way to revive one), or <b>Pre-load</b> an attack.</li>
+        </ul>
+      </div>
+
+      <div class="infosec">
+        <h3>Try this</h3>
+        <ul>
+          <li><b>CROSSFIRE</b> — the default aim loses. Re-aim your big gun at the sniper: kill its <span class="cyk">Core</span>, or disable its <b>Weapon</b>.</li>
+          <li><b>THE WARDEN</b> boss can't be out-slugged — disable its <b>Doom Array</b> nuke or get deleted.</li>
+        </ul>
+      </div>
+
+      <p style="color:var(--dim);font-size:11px;margin-top:16px">Early prototype — combat systems only, no story/economy yet. Feedback very welcome.</p>
+      <div class="infocta"><button class="btn primary" id="infoGo">Got it — build a mech ▷</button></div>
+    </div>
+  </div>
+
+  <!-- GARAGE -->
+  <section id="garage" class="screen active">
+    <div class="garage">
+      <div class="panel">
+        <h2 class="head">Chassis · each part has its own HP · Core = your life</h2>
+        <div class="frame" id="frame"></div>
+        <div id="statPanel"></div>
+        <div class="tactics">
+          <h2 class="head">Abilities &amp; Tactics · when it fires · what part it aims at</h2>
+          <div id="tacticsList"></div>
+        </div>
+        <div class="btnrow">
+          <button class="btn primary" id="toDeploy">Deploy ▷</button>
+          <button class="btn ghostbtn" id="randomBtn">Randomize</button>
+          <button class="btn ghostbtn" id="resetBtn">Reset</button>
+        </div>
+        <div class="warn" id="garageWarn"></div>
+      </div>
+      <div class="panel">
+        <h2 class="head" id="partsHead">Parts</h2>
+        <div class="parts" id="partList"></div>
+      </div>
+    </div>
+    <div class="footnote">
+      <b class="cy">New in v0.3:</b> mechs are built from parts that each have <b>HP</b>. Knock a part to 0 and it's
+      <b class="am">disabled</b> — abilities go dark, and a downed <b>weapon</b> drops to a weak broken attack.
+      A mech only dies when its <b>Core</b> is destroyed. So attacks now choose a <b>part to aim at</b>: race the Core for the kill,
+      or disable their weapon first. Damage &amp; disables <b>persist</b> down the lane — <b>Full-Repair</b> (Lightning) is the only way to revive a part.
+    </div>
+  </section>
+
+  <!-- MISSION SELECT -->
+  <section id="mission" class="screen">
+    <h2 class="head">Select Deployment · part damage persists across each lane run</h2>
+    <div class="missions" id="missionCards"></div>
+    <div class="btnrow"><button class="btn ghostbtn" id="backToGarage">◁ Back to garage</button></div>
+  </section>
+
+  <!-- LANE -->
+  <section id="lane" class="screen">
+    <div class="lanewrap">
+      <div class="panel">
+        <h2 class="head" id="laneName">Lane Run</h2>
+        <div class="lanetrack" id="laneTrack"></div>
+        <div class="mlabel"><span class="l">Core integrity — 0 = destroyed</span><span id="coreTxt"></span></div>
+        <div class="bigtrack"><div class="bigfill core" id="coreFill"></div></div>
+        <div class="lanestrip" id="laneStrip"></div>
+        <div class="mlabel light" style="margin-top:14px"><span class="l">⚡ Lightning in a Bottle</span><span id="lightTxt"></span></div>
+        <div class="bigtrack"><div class="bigfill light" id="lightFill"></div></div>
+        <p class="hint" id="laneHint"></p>
+      </div>
+      <div class="panel">
+        <h2 class="head">Between-fight actions</h2>
+        <div class="laneact">
+          <button class="btn ghostbtn" id="repairBtn"><span>Repair part HP (+40%)</span><span class="cost">25 ⚡</span></button>
+          <button class="btn ghostbtn" id="fullrepairBtn"><span>Full-Repair a disabled part</span><span class="cost">35 ⚡</span></button>
+          <div id="repairPanel"></div>
+          <button class="btn ghostbtn" id="prebuffBtn"><span>Pre-load an ability</span><span class="cost">25 ⚡</span></button>
+          <div id="prebuffPanel"></div>
+          <button class="btn primary" id="engageBtn">Engage ▷</button>
+        </div>
+        <p class="hint">Heal (Repair) tops up part HP but <b>never</b> revives a disabled part. Only <b>Full-Repair</b> brings a dead part — or a degraded weapon — back.</p>
+      </div>
+    </div>
+    <div class="btnrow"><button class="btn ghostbtn" id="laneAbort">◁ Abort to garage</button></div>
+  </section>
+
+  <!-- SKIRMISH -->
+  <section id="skirmish" class="screen">
+    <div class="arena">
+      <div class="atop"><span class="an" id="skName">Skirmish</span><span id="skTip">parts break · Core is the kill</span></div>
+      <div class="banner" id="banner">&nbsp;</div>
+      <div class="field"><div class="side" id="sidePlayer"></div><div class="vs">VS</div><div class="side" id="sideEnemy"></div></div>
+      <div id="skEnd"></div>
+      <div class="acontrols">
+        <button class="btn ghostbtn" id="skSkip">Skip ▸▸</button>
+        <button class="btn primary" id="skContinue" style="display:none">Continue ▷</button>
+      </div>
+    </div>
+    <div class="hint">Hands-off — you set this up in the garage. Watch parts get knocked out, or Skip. Deterministic either way.</div>
+  </section>
+
+  <!-- RESULT -->
+  <section id="result" class="screen">
+    <div class="result">
+      <div class="rtitle" id="rTitle">RUN CLEARED</div>
+      <div class="rsub" id="rSub"></div>
+      <div class="rstats">
+        <div class="rstat"><div class="rv" id="rFights">0</div><div class="rl">Skirmishes</div></div>
+        <div class="rstat"><div class="rv" id="rCore">0%</div><div class="rl">Core left</div></div>
+        <div class="rstat"><div class="rv" id="rLight">0</div><div class="rl">Lightning spent</div></div>
+      </div>
+      <div class="btnrow" style="justify-content:center">
+        <button class="btn primary" id="rRetry">Run it back</button>
+        <button class="btn ghostbtn" id="rGarage">◁ Garage</button>
+      </div>
+      <div class="hint" id="rHint"></div>
+    </div>
+  </section>
+</div>
+
+<script>
+"use strict";
+/* ============================================================
+   LIGHTNING STRIKE v0.3 — part-based mechs (per-part HP, Core-kill,
+   disable/degrade, part-target tactics, Heal vs Full-Repair).
+   ============================================================ */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+const FP_SCALE=0.8, ARMOR_DIV=130, ARMOR_CAP=0.6, CHIP=3, MULTI_MULT=0.6, VAR=0.12, MAX_ROUNDS=18;
+
+const CONDITIONS={
+  'always':{label:'Fire: always'},
+  'target-lowest-integrity':{label:'Aim unit: weakest'},
+  'target-most-armor':{label:'Aim unit: toughest'},
+  'target-highest-firepower':{label:'Aim unit: deadliest'},
+  'when-2plus-enemies':{label:'Fire: if 2+ foes'},
+  'when-self-below-50':{label:'Fire: if I\'m hurt'},
+  'first-round-only':{label:'Fire: round 1 only'},
+};
+const PART_TARGETS={ 'core':'Part: Core (kill)', 'weapon':'Part: Weapon (disable)', 'backpack':'Part: Backpack' };
+
+/* ability builders */
+function atk(name,power,o={}){return {name,type:'attack',power,targeting:o.targeting||'single',cooldown:o.cd||0,condition:o.cond||'always',partTarget:o.part||'core'};}
+function sup(name,type,power,o={}){return {name,type,power,targeting:o.targeting||'self',cooldown:o.cd||0,condition:o.cond||'always',partTarget:'core'};}
+
+/* ---------- PARTS ---------- */
+const S=(o)=>Object.assign({integrity:0,firepower:0,armor:0,speed:0,charge:0},o);
+// weapons carry .ability (attack) AND .broken (degraded fallback)
+const PARTS=[
+  // HEAD
+  {id:'hawkeye',slot:'head',name:'HAWKEYE FCS',arch:'utility',stats:S({firepower:8,charge:0.4}),ability:sup('Lock-On','buff',10,{cd:3,cond:'first-round-only'})},
+  {id:'iris',slot:'head',name:'IRIS Optics',arch:'utility',stats:S({charge:0.6,armor:6})},
+  {id:'owl',slot:'head',name:'OWL Sensor',arch:'utility',stats:S({speed:6,charge:0.4})},
+  // CORE
+  {id:'bastion',slot:'core',name:'BASTION Core',arch:'chassis',stats:S({integrity:120,armor:14,speed:-3})},
+  {id:'runner',slot:'core',name:'RUNNER Core',arch:'chassis',stats:S({integrity:70,speed:6,charge:0.8})},
+  {id:'reactor',slot:'core',name:'REACTOR-X Core',arch:'chassis',stats:S({integrity:90,charge:1.6,armor:-4}),ability:sup('Reactor Vent','heal',34,{cd:4,cond:'when-self-below-50'})},
+  // R-ARM (weapon)
+  {id:'vulcan',slot:'rarm',name:'VULCAN Rifle',arch:'kinetic',stats:S({firepower:15}),ability:atk('Burst Fire',18,{cd:0}),broken:atk('Single Bolt',6,{cd:0})},
+  {id:'plasma',slot:'rarm',name:'PLASMA Blade',arch:'energy',stats:S({firepower:24,speed:2}),ability:atk('Overhead Slash',44,{cd:2}),broken:atk('Pistol-Whip',12,{cd:0})},
+  {id:'gatling',slot:'rarm',name:'GATLING Arm',arch:'kinetic',stats:S({firepower:12}),ability:atk('Suppress',15,{targeting:'multi',cd:1,cond:'when-2plus-enemies'}),broken:atk('Jammed Shot',5,{cd:0})},
+  // L-ARM (weapon or shield)
+  {id:'saber',slot:'larm',name:'SABER',arch:'energy',stats:S({firepower:14,speed:2}),ability:atk('Riposte',26,{cd:1}),broken:atk('Clumsy Jab',8,{cd:0})},
+  {id:'shieldarm',slot:'larm',name:'SHIELD Arm',arch:'shield',alsoFits:['backpack'],stats:S({integrity:40,armor:18}),ability:sup('Raise Guard','defense',34,{cd:1,cond:'when-self-below-50'})},
+  {id:'missarm',slot:'larm',name:'MISSILE Arm',arch:'explosive',alsoFits:['backpack'],stats:S({firepower:6}),ability:atk('Missile Volley',20,{targeting:'multi',cd:1}),broken:atk('Dud Missile',6,{cd:1})},
+  // BACKPACK
+  {id:'misspod',slot:'backpack',name:'MISSILE Pod',arch:'explosive',stats:S({firepower:8}),ability:atk('Salvo',16,{targeting:'multi',cd:1}),broken:atk('Misfire',5,{cd:1})},
+  {id:'shpack',slot:'backpack',name:'SHIELD Pack',arch:'shield',stats:S({integrity:50,armor:10}),ability:sup('Barrier','defense',44,{cd:2,cond:'when-self-below-50'})},
+  {id:'repairpod',slot:'backpack',name:'REPAIR Pod',arch:'utility',stats:S({charge:0.8}),ability:sup('Nanorepair','heal',26,{cd:3,cond:'when-self-below-50'})},
+  {id:'fieldkit',slot:'backpack',name:'FIELD KIT',arch:'utility',stats:S({charge:0.5,integrity:20}),ability:sup('Field Repair','full-repair',0,{cd:3,cond:'always'})},
+  {id:'drone',slot:'backpack',name:'DRONE Bay',arch:'utility',stats:S({charge:0.6,firepower:4}),ability:atk('Drone Strike',12,{cd:0}),broken:atk('Sputter',3,{cd:0})},
+  {id:'thrust',slot:'backpack',name:'THRUSTER Pack',arch:'mobility',stats:S({speed:10,charge:0.5})},
+  // LEGS
+  {id:'sprint',slot:'legs',name:'SPRINT Legs',arch:'mobility',stats:S({speed:12})},
+  {id:'tread',slot:'legs',name:'TANK Treads',arch:'mobility',stats:S({integrity:90,armor:20,speed:-5})},
+  {id:'spider',slot:'legs',name:'SPIDER Legs',arch:'mobility',stats:S({armor:8,speed:3}),ability:sup('Skitter','defense',22,{cd:2,cond:'when-self-below-50'})},
+];
+const PART=Object.fromEntries(PARTS.map(p=>[p.id,p]));
+const SLOTS=['head','core','rarm','larm','backpack','legs'];
+const SLOT_LABEL={head:'Head',core:'Core',rarm:'R-Arm',larm:'L-Arm',backpack:'Backpack',legs:'Legs'};
+const SLOT_BASE_HP={core:120,legs:70,rarm:55,larm:55,backpack:55,head:40};
+const fitsSlot=(p,s)=>p.slot===s||(p.alsoFits&&p.alsoFits.includes(s));
+const partsForSlot=(s)=>PARTS.filter(p=>fitsSlot(p,s));
+const partMaxHp=(p)=>SLOT_BASE_HP[p.slot]+(p.stats.integrity||0);
+const isWeaponPart=(p)=>p&&p.ability&&p.ability.type==='attack';
+
+const BASE={firepower:10,armor:0,speed:10,charge:1.0};
+const STAT_META=[{k:'coreHp',label:'Core HP',max:280},{k:'firepower',label:'Firepower',max:80},{k:'armor',label:'Armor',max:70},{k:'speed',label:'Speed',max:44},{k:'charge',label:'Charge',max:5}];
+function derive(loadout){
+  const d=Object.assign({},BASE);
+  for(const slot of SLOTS){const id=loadout[slot];if(!id)continue;const st=PART[id].stats;
+    d.firepower+=st.firepower;d.armor+=st.armor;d.speed+=st.speed;d.charge+=st.charge;}
+  d.firepower=Math.max(0,d.firepower);d.armor=Math.max(0,d.armor);d.speed=Math.max(1,d.speed);d.charge=Math.max(0.2,d.charge);
+  d.coreHp=loadout.core?partMaxHp(PART[loadout.core]):SLOT_BASE_HP.core;
+  return d;
+}
+
+/* ---------- ENEMIES ---------- */
+function pcore(hp,ability){return {key:'core',label:'Core',maxHp:hp,isCore:true,ability:ability||null};}
+function pweapon(hp,name,power,bname,bpow,o={}){return {key:'weapon',label:'Weapon',maxHp:hp,isWeapon:true,
+  ability:atk(name,power,o),broken:atk(bname,bpow,{cd:0,cond:o.cond||'always',part:o.part||'core'})};}
+function ppart(key,label,hp,ability){return {key,label,maxHp:hp,ability};}
+const EN={
+  turret:{name:'TURRET NEST',type:'trap',mono:true,armor:22,speed:20,firepower:0,hp:120,abilities:[atk('Auto-Turret',15,{cd:0,part:'core'})]},
+  tank:{name:'SIEGE TANK',type:'tank',mono:true,armor:55,speed:6,firepower:8,hp:260,abilities:[atk('Siege Gun',18,{cd:1,part:'core'})]},
+  bot:{name:'MINI-BOT',type:'swarm',mono:true,armor:0,speed:12,firepower:8,hp:40,abilities:[atk('Zap',10,{cd:0,part:'core'})]},
+  scrap:{name:'SCRAP MECH',type:'mech',armor:6,speed:8,firepower:8,parts:[pcore(130),pweapon(45,'Rusty Cannon',16,'Sputter',6)]},
+  line:{name:'LINE MECH',type:'mech',armor:12,speed:9,firepower:12,parts:[pcore(150),pweapon(50,'Rifle',16,'Single Bolt',6),ppart('backpack','Backpack',50,atk('Missile',26,{cd:2,part:'core'}))]},
+  sniper:{name:'RAIL SNIPER',type:'sniper',armor:10,speed:15,firepower:30,parts:[pcore(130),pweapon(48,'Railshot',40,'Bad Shot',8,{cond:'target-lowest-integrity'})]},
+  bruiser:{name:'BRUISER',type:'mech',armor:20,speed:7,firepower:16,parts:[pcore(185),pweapon(60,'Hammer',26,'Punch',10,{cd:1,part:'weapon'})]},
+  // Boss puzzle: a huge Core (too slow to race before its guns kill you) forces you to disable a
+  // subsystem. Doom Array = a devastating nuke (disable to survive); Siege Cannon = steady core
+  // damage (disable for relief). At half HP the Core enrages, spiking whatever guns are still live.
+  warden:{name:'THE WARDEN',type:'boss',armor:28,speed:9,firepower:16,parts:[
+     pcore(420,sup('Overload Surge','buff',16,{cd:6,cond:'when-self-below-50'})),
+     pweapon(85,'Siege Cannon',24,'Cracked Barrel',8,{cd:1,part:'core'}),
+     ppart('backpack','Doom Array',70,atk('Overload Beam',46,{cd:2,cond:'target-lowest-integrity',part:'core'}))]},
+};
+const MISSIONS=[
+  {id:0,name:'FIRST CONTACT',diff:1,desc:'One duel. Build a mech, send it, watch the parts fight. Note the enemy has a Core and a Weapon.',encounters:[{name:'Scrap Mech',threat:'Light',enemies:['scrap']}]},
+  {id:1,name:'THE GAUNTLET',diff:2,desc:'A turret chips your Core, then a mech duel — wounds carried over. Repair between fights.',encounters:[{name:'Turret Nest',threat:'Trap',enemies:['turret']},{name:'Line Mech',threat:'Medium',enemies:['line']}]},
+  {id:2,name:'CROSSFIRE',diff:3,desc:'A tank you can\'t crack + a sniper that deletes you. Default aim loses. Re-aim at the sniper — kill its Core, or disable its Weapon.',encounters:[{name:'Tank + Sniper',threat:'Tactics',enemies:['tank','sniper']}]},
+  {id:3,name:'THE WARDEN',diff:3,desc:'Swarm, then a bruiser that smashes your weapon, then the boss. Full-Repair a downed part before the Warden.',encounters:[{name:'Bot Swarm',threat:'Swarm',enemies:['bot','bot','bot']},{name:'Bruiser',threat:'Heavy',enemies:['bruiser']},{name:'The Warden',threat:'BOSS',enemies:['warden']}]},
+];
+
+/* ============================================================
+   SIM
+   ============================================================ */
+// build a sim unit (deep, mutable). Player from loadout+persisted part state; enemy from proto.
+function buildPlayerSimUnit(runMech){
+  const parts=[];
+  for(const slot of SLOTS){
+    const id=runMech.loadout[slot]; if(!id)continue; const p=PART[id];
+    const ps=runMech.parts[slot];
+    const part={key:slot,label:SLOT_LABEL[slot],slot,maxHp:partMaxHp(p),hp:ps.hp,disabled:ps.disabled,
+      isCore:slot==='core', isWeapon:isWeaponPart(p),
+      ability:p.ability?Object.assign({},p.ability):null, broken:p.broken?Object.assign({},p.broken):null,
+      cond:(runMech.tactics[slot]||(p.ability&&p.ability.condition)||'always'),
+      pt:(runMech.partTargets[slot]||(p.ability&&p.ability.partTarget)||'core')};
+    parts.push(part);
+  }
+  const d=runMech.derived;
+  return {id:'P',side:'player',name:runMech.name,type:'mech',mono:false,armor:d.armor,speed:d.speed,firepower:d.firepower,guard:0,cds:{},parts};
+}
+function buildEnemySimUnit(def,idx){
+  const id='E'+idx;
+  if(def.mono){
+    return {id,side:'enemy',name:def.name,type:def.type,mono:true,armor:def.armor,speed:def.speed,firepower:def.firepower,
+      hp:def.hp,maxHp:def.hp,guard:0,cds:{},
+      abilities:def.abilities.map((a,i)=>Object.assign({},a,{key:'m'+i,cond:a.condition,pt:a.partTarget||'core'}))};
+  }
+  const parts=def.parts.map(p=>({key:p.key,label:p.label,maxHp:p.maxHp,hp:p.maxHp,disabled:false,isCore:!!p.isCore,isWeapon:!!p.isWeapon,
+    ability:p.ability?Object.assign({},p.ability):null,broken:p.broken?Object.assign({},p.broken):null,
+    cond:p.ability?p.ability.condition:'always',pt:p.ability?(p.ability.partTarget||'core'):'core'}));
+  return {id,side:'enemy',name:def.name,type:def.type,mono:false,armor:def.armor,speed:def.speed,firepower:def.firepower,guard:0,cds:{},parts};
+}
+const corePart=u=>u.parts&&u.parts.find(p=>p.isCore);
+const unitAlive=u=>u.mono?u.hp>0:(corePart(u)?corePart(u).hp>0:false);
+function coreFrac(u){if(u.mono)return u.hp/u.maxHp;const c=corePart(u);return c?c.hp/c.maxHp:0;}
+// active abilities (respect disable + weapon degrade), each carries part key, cond, pt
+function activeAbilities(u){
+  if(u.mono)return u.abilities.map(a=>({src:a,key:a.key,name:a.name,type:a.type,power:a.power,targeting:a.targeting,cooldown:a.cooldown,cond:a.cond,pt:a.pt,broken:false}));
+  const out=[];
+  for(const part of u.parts){
+    if(part.disabled){
+      if(part.isWeapon&&part.broken)out.push({src:part.broken,key:part.key,name:part.broken.name,type:'attack',power:part.broken.power,targeting:part.broken.targeting||'single',cooldown:part.broken.cooldown||0,cond:part.cond,pt:part.pt,broken:true});
+      continue;
+    }
+    if(part.ability)out.push({src:part.ability,key:part.key,name:part.ability.name,type:part.ability.type,power:part.ability.power,targeting:part.ability.targeting,cooldown:part.ability.cooldown,cond:part.cond,pt:part.pt,broken:false});
+  }
+  return out;
+}
+function condFiringMet(cond,u,foes,round){
+  switch(cond){
+    case 'first-round-only':return round===1;
+    case 'when-self-below-50':return coreFrac(u)<0.5;
+    case 'when-2plus-enemies':return foes.length>=2;
+    default:return true;
+  }
+}
+function chooseTargetUnit(cond,foes){
+  const hpOf=u=>u.mono?u.hp:corePart(u).hp;
+  if(cond==='target-lowest-integrity')return foes.reduce((a,b)=>hpOf(b)<hpOf(a)?b:a);
+  if(cond==='target-most-armor')return foes.reduce((a,b)=>b.armor>a.armor?b:a);
+  if(cond==='target-highest-firepower')return foes.reduce((a,b)=>b.firepower>a.firepower?b:a);
+  return foes[0];
+}
+function choosePart(ptId,target){
+  if(target.mono)return null;
+  if(ptId==='core')return corePart(target);
+  let p;
+  if(ptId==='weapon')p=target.parts.find(x=>x.isWeapon&&!x.disabled);
+  else if(ptId==='backpack')p=target.parts.find(x=>x.key==='backpack'&&!x.disabled);
+  return p||corePart(target); // targeted part gone/disabled → fire redirects to the Core (the kill)
+}
+function resolveSkirmish(runMech, enemyDefs, seed, prebuff){
+  const rng=mulberry32(seed>>>0);
+  const P=buildPlayerSimUnit(runMech);
+  const Es=enemyDefs.map((d,i)=>buildEnemySimUnit(d,i));
+  const all=()=>[P,...Es];
+  const aliveArr=arr=>arr.filter(unitAlive);
+  // initial snapshot for renderer
+  const units0=all().map(u=>({id:u.id,side:u.side,name:u.name,type:u.type,mono:u.mono,armor:u.armor,speed:u.speed,
+    hp:u.mono?u.hp:undefined,maxHp:u.mono?u.maxHp:undefined,
+    parts:u.mono?undefined:u.parts.map(p=>({key:p.key,label:p.label,maxHp:p.maxHp,startHp:p.hp,isCore:p.isCore,isWeapon:p.isWeapon,startDisabled:p.disabled}))}));
+  const flat=[]; let result=null;
+  for(let round=1;round<=MAX_ROUNDS;round++){
+    if(!unitAlive(P)){result='lose';break;}
+    if(aliveArr(Es).length===0){result='win';break;}
+    const order=aliveArr(all()).slice().sort((a,b)=>(b.speed-a.speed)||(a.side==='player'?-1:1));
+    for(const u of order){
+      if(!unitAlive(u))continue;
+      const foes=u.side==='player'?aliveArr(Es):(unitAlive(P)?[P]:[]);
+      if(foes.length===0)continue;
+      u.guard=0;
+      const abils=activeAbilities(u).sort((a,b)=>prio(a)-prio(b));
+      for(const A of abils){
+        if((u.cds[A.key]||0)>0)continue;
+        const isPB=(u.side==='player'&&prebuff&&prebuff.key===A.key&&round===1);
+        // eligibility
+        if(A.type==='attack'){ if((u.side==='player'?aliveArr(Es):[P]).filter(unitAlive).length===0)break; }
+        if(A.type==='full-repair'){ if(!u.parts||!u.parts.some(p=>p.disabled&&!p.isCore))continue; }
+        if(A.type==='heal'){ if(!u.parts||!u.parts.some(p=>!p.disabled&&p.hp<p.maxHp)){ if(!(u.mono&&u.hp<u.maxHp))continue; } }
+        if(!isPB && !condFiringMet(A.cond,u,foes,round))continue;
+        const act=applyAbility(u,A,(u.side==='player'?aliveArr(Es):[P]),rng,round,isPB?prebuff.mult:1);
+        if(!act)continue;
+        u.cds[A.key]=A.cooldown||0;
+        flat.push(act);
+        if(!unitAlive(P)){result='lose';break;}
+        if(aliveArr(Es).length===0){result='win';break;}
+      }
+      if(result)break;
+    }
+    for(const u of all())for(const k in u.cds)if(u.cds[k]>0)u.cds[k]--;
+    if(result)break;
+  }
+  if(!result)result=aliveArr(Es).length===0?'win':'lose';
+  const partsAfter={};
+  for(const p of P.parts)partsAfter[p.slot]={hp:Math.max(0,Math.round(p.hp)),maxHp:p.maxHp,disabled:p.disabled};
+  return {units:units0,flat,result,playerPartsAfter:partsAfter,coreAfter:Math.max(0,Math.round(corePart(P).hp)),coreMax:corePart(P).maxHp};
+}
+function prio(a){return a.type==='buff'?0:a.type==='full-repair'?1:a.type==='heal'?2:a.type==='defense'?3:4;}
+function applyDamage(target,part,raw,rng){
+  let dmg=raw*(1+(rng()*2-1)*VAR);
+  dmg=dmg*(1-Math.min(ARMOR_CAP,target.armor/ARMOR_DIV));
+  let blocked=false;
+  if(target.guard>0){const ab=Math.min(target.guard,dmg);target.guard-=ab;dmg-=ab;if(dmg<=0.5)blocked=true;}
+  const dealt=blocked?0:Math.max(CHIP,Math.round(dmg));
+  let hpAfter,disabled=false,killed=false;
+  if(target.mono){target.hp=Math.max(0,target.hp-dealt);hpAfter=target.hp;killed=target.hp<=0;}
+  else{part.hp=Math.max(0,part.hp-dealt);hpAfter=part.hp;
+    if(part.hp<=0&&!part.disabled){part.disabled=true;disabled=true;} if(part.disabled)disabled=true;
+    killed=part.isCore&&part.hp<=0;}
+  return {unitId:target.id,partKey:part?part.key:'core',value:dealt,hpAfter,blocked,disabled,killed};
+}
+function applyAbility(u,A,foes,rng,round,mult){
+  const act={round,actorId:u.id,actorName:u.name,actorSide:u.side,abilityName:A.name,broken:A.broken,type:A.type,targets:[]};
+  if(A.type==='attack'){
+    const power=A.power*(mult||1); const base=power+u.firepower*FP_SCALE;
+    let tgts;
+    if(A.targeting==='multi'){tgts=foes.slice();}
+    else{tgts=[chooseTargetUnit(A.cond,foes)];}
+    for(const t of tgts){
+      const part=choosePart(A.pt,t);
+      const raw=base*(A.targeting==='multi'?MULTI_MULT:1);
+      act.targets.push(Object.assign({name:t.name,partLabel:part?part.label:null},applyDamage(t,part,raw,rng)));
+    }
+  } else if(A.type==='heal'){
+    const cand=u.parts?u.parts.filter(p=>!p.disabled&&p.hp<p.maxHp):[];
+    if(!cand.length)return null;
+    const part=cand.reduce((a,b)=>b.hp<a.hp?b:a);
+    part.hp=Math.min(part.maxHp,part.hp+A.power);
+    act.kind='heal';act.value=A.power;act.targets.push({unitId:u.id,partKey:part.key,partLabel:part.label,name:u.name,value:A.power,hpAfter:part.hp,heal:true});
+  } else if(A.type==='full-repair'){
+    const dis=u.parts.filter(p=>p.disabled&&!p.isCore); if(!dis.length)return null;
+    const part=dis.find(p=>p.isWeapon)||dis[0];
+    part.disabled=false;part.hp=part.maxHp;
+    act.kind='full-repair';act.targets.push({unitId:u.id,partKey:part.key,partLabel:part.label,name:u.name,hpAfter:part.hp,revived:true});
+  } else if(A.type==='defense'){u.guard+=Math.round(A.power);act.kind='guard';act.value=Math.round(A.power);}
+  else if(A.type==='buff'){u.firepower+=Math.round(A.power);act.kind='buff';act.value=Math.round(A.power);}
+  return act;
+}
+
+/* ============================================================ STATE ============================================================ */
+const DEFAULT_LOADOUT={head:'hawkeye',core:'runner',rarm:'vulcan',larm:'shieldarm',backpack:'misspod',legs:'sprint'};
+const state={loadout:Object.assign({},DEFAULT_LOADOUT),tactics:{},partTargets:{},selSlot:'rarm',run:null};
+const $=s=>document.querySelector(s);
+const el=(t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e;};
+
+/* ---------- GARAGE ---------- */
+function renderFrame(){
+  const f=$('#frame');f.innerHTML='';
+  const cls={head:'fr-head',backpack:'fr-bp',rarm:'fr-rarm',core:'fr-core',larm:'fr-larm',legs:'fr-legs'};
+  for(const slot of SLOTS){
+    const id=state.loadout[slot];const p=id?PART[id]:null;
+    const b=el('div','slotbtn '+cls[slot]+(slot==='core'?' core':'')+(slot===state.selSlot?' sel':''));
+    b.innerHTML=`<span class="sl">${SLOT_LABEL[slot]}</span>
+      <span class="eq ${p?'':'empty'}">${p?p.name.split(' ')[0]:'— empty'}</span>
+      ${p?`<span class="hp">${partMaxHp(p)} hp</span>`:''}
+      ${p&&p.ability?`<span class="ab">◈ ${p.ability.name}</span>`:''}`;
+    b.onclick=()=>{state.selSlot=slot;renderFrame();renderParts();};
+    f.appendChild(b);
+  }
+}
+function chips(p){
+  const short={integrity:'INT',firepower:'FP',armor:'ARM',speed:'SPD',charge:'CHG'};const st=p.stats;
+  const out=[`<span class="chip hp">${partMaxHp(p)} HP</span>`];
+  for(const k of Object.keys(short))if(st[k]){const v=st[k];const val=(k==='charge')?(v>0?'+':'')+v.toFixed(1):(v>0?'+':'')+v;out.push(`<span class="chip ${v>0?'pos':'neg'}">${short[k]} ${val}</span>`);}
+  return out.join('');
+}
+function renderParts(){
+  const box=$('#partList');box.innerHTML='';const slot=state.selSlot;
+  $('#partsHead').textContent=SLOT_LABEL[slot]+' — parts  ·  base HP '+SLOT_BASE_HP[slot];
+  const un=el('div','part'+(state.loadout[slot]?'':' equipped'));
+  un.innerHTML=`<div class="pn" style="color:var(--dim)">— Empty slot</div><div class="abil ai">No part.</div>`;
+  un.onclick=()=>{state.loadout[slot]=null;clearSlotTac(slot);equipDone();};un.onmouseenter=()=>preview(slot,null);un.onmouseleave=clearPrev;
+  box.appendChild(un);
+  for(const p of partsForSlot(slot)){
+    const eq=state.loadout[slot]===p.id;const card=el('div','part'+(eq?' equipped':''));
+    const cross=p.slot!==slot?`<span class="cross">↔ ${SLOT_LABEL[p.slot]}</span>`:(p.alsoFits?`<span class="cross">↔ ${p.alsoFits.map(s=>SLOT_LABEL[s]).join('/')}</span>`:'');
+    let abil='<div class="abil ai">Passive — flat stats only</div>';
+    if(p.ability){abil=`<div class="abil">◈ ${p.ability.name} <span class="ai">· ${p.ability.type}${p.ability.type==='attack'?' · pow '+p.ability.power:''}${p.ability.targeting==='multi'?' · multi':''}${p.ability.cooldown?' · cd'+p.ability.cooldown:''}</span></div>`;
+      if(p.broken)abil+=`<div class="abil broken">✕ if disabled → <b>${p.broken.name}</b> (pow ${p.broken.power})</div>`;}
+    card.innerHTML=`<span class="arch">${p.arch}</span>${cross}<div class="pn">${p.name}</div>${abil}<div class="chips">${chips(p)}</div>`;
+    card.onclick=()=>{state.loadout[slot]=p.id;clearSlotTac(slot);equipDone();};card.onmouseenter=()=>preview(slot,p.id);card.onmouseleave=clearPrev;
+    box.appendChild(card);
+  }
+}
+function clearSlotTac(slot){delete state.tactics[slot];delete state.partTargets[slot];}
+function equipDone(){renderFrame();renderParts();renderStats();renderTactics();validate();}
+function preview(slot,id){const pv=Object.assign({},state.loadout);pv[slot]=id;renderStats(pv);}
+function clearPrev(){renderStats();}
+function renderStats(previewLo){
+  const cur=derive(state.loadout);const shown=previewLo?derive(previewLo):cur;
+  const box=$('#statPanel');box.innerHTML='';
+  for(const m of STAT_META){
+    const now=cur[m.k],nv=shown[m.k];const pct=Math.min(100,nv/m.max*100);
+    const up=previewLo&&nv>now,down=previewLo&&nv<now;const fmt=v=>m.k==='charge'?v.toFixed(1):Math.round(v);
+    let dh='';if(previewLo&&nv!==now){const dv=nv-now;dh=`<span class="delta ${dv>0?'pos':'neg'}">${m.k==='charge'?(dv>0?'+':'')+dv.toFixed(1):(dv>0?'+':'')+Math.round(dv)}</span>`;}
+    const row=el('div','stat');
+    row.innerHTML=`<span class="lbl">${m.label}</span><span class="track"><span class="fill ${up?'up':''}" style="width:${pct}%;${down?'background:linear-gradient(90deg,#7a2b2b,var(--red))':''}"></span>${previewLo&&nv!==now?`<span class="ghost" style="left:${Math.min(100,now/m.max*100)}%"></span>`:''}</span><span class="val">${fmt(nv)}${dh}</span>`;
+    box.appendChild(row);
+  }
+}
+function renderTactics(){
+  const box=$('#tacticsList');box.innerHTML='';
+  const abils=[];
+  for(const slot of SLOTS){const id=state.loadout[slot];if(!id)continue;const p=PART[id];if(p.ability)abils.push({slot,p,a:p.ability});}
+  if(!abils.length){box.innerHTML='<div class="tac-empty">No active abilities — this mech is all passive stat parts.</div>';return;}
+  for(const {slot,p,a} of abils){
+    const row=el('div','tacrow');
+    const cond=state.tactics[slot]||a.condition||'always';
+    const condSel=`<select data-slot="${slot}" data-kind="cond">${Object.keys(CONDITIONS).map(c=>`<option value="${c}"${c===cond?' selected':''}>${CONDITIONS[c].label}</option>`).join('')}</select>`;
+    let aimSel='';
+    if(a.type==='attack'){const pt=state.partTargets[slot]||a.partTarget||'core';
+      aimSel=`<select class="aim" data-slot="${slot}" data-kind="pt">${Object.keys(PART_TARGETS).map(c=>`<option value="${c}"${c===pt?' selected':''}>${PART_TARGETS[c]}</option>`).join('')}</select>`;}
+    row.innerHTML=`<span class="an"><span class="tag">${a.type}</span>${a.name} <span class="slotname">· ${SLOT_LABEL[slot]}</span></span><span class="tacsel">${condSel}${aimSel}</span>`;
+    box.appendChild(row);
+  }
+  box.querySelectorAll('select').forEach(s=>s.onchange=(e)=>{const sl=e.target.dataset.slot;
+    if(e.target.dataset.kind==='cond')state.tactics[sl]=e.target.value; else state.partTargets[sl]=e.target.value;});
+}
+function validate(){
+  const hasAtk=SLOTS.some(s=>{const id=state.loadout[s];return id&&PART[id].ability&&PART[id].ability.type==='attack';});
+  $('#garageWarn').textContent=hasAtk?'':'⚠ No attack ability — equip a weapon in R-Arm, L-Arm, or Backpack.';
+  $('#toDeploy').disabled=!hasAtk;return hasAtk;
+}
+$('#toDeploy').onclick=()=>{if(validate())show('mission');};
+$('#resetBtn').onclick=()=>{state.loadout=Object.assign({},DEFAULT_LOADOUT);state.tactics={};state.partTargets={};equipDone();};
+$('#randomBtn').onclick=()=>{for(const slot of SLOTS){const o=partsForSlot(slot);state.loadout[slot]=o[Math.floor(Math.random()*o.length)].id;}state.tactics={};state.partTargets={};
+  if(!validate())state.loadout.rarm='vulcan';equipDone();};
+
+/* ---------- MISSION SELECT ---------- */
+function renderMissions(){
+  const box=$('#missionCards');box.innerHTML='';
+  MISSIONS.forEach((m,i)=>{const c=el('div','mcard');
+    const pips=[1,2,3].map(n=>`<span class="pip ${n<=m.diff?'on':''}"></span>`).join('');
+    c.innerHTML=`<div class="mno">DEPLOYMENT ${String(i+1).padStart(2,'0')}</div><div class="mt">${m.name}</div><div class="md">${m.desc}</div><div class="enc">▷ ${m.encounters.map(e=>e.name).join('  →  ')}</div><div class="diff">${pips}</div>`;
+    c.onclick=()=>startRun(i);box.appendChild(c);});
+}
+$('#backToGarage').onclick=()=>show('garage');
+
+/* ---------- LANE ---------- */
+function startRun(mi){
+  const d=derive(state.loadout);
+  const parts={};for(const slot of SLOTS){if(state.loadout[slot]){const mx=partMaxHp(PART[state.loadout[slot]]);parts[slot]={hp:mx,maxHp:mx,disabled:false};}}
+  state.run={mission:MISSIONS[mi],missionIdx:mi,idx:0,fights:0,lightning:24,lightningSpent:0,prebuff:null,
+    mech:{name:'ROOK-7',loadout:state.loadout,tactics:state.tactics,partTargets:state.partTargets,derived:d,parts}};
+  repairOpen=false;prebuffOpen=false;show('lane');renderLane();
+}
+function playerPartArray(){const r=state.run;const out=[];for(const slot of SLOTS){if(r.mech.parts[slot])out.push({slot,ps:r.mech.parts[slot],p:PART[state.loadout[slot]]});}return out;}
+function renderLane(){
+  const r=state.run,m=r.mission;
+  $('#laneName').textContent='▷ '+m.name;
+  const track=$('#laneTrack');track.innerHTML='';
+  m.encounters.forEach((e,i)=>{if(i)track.appendChild(el('span','arrow','→'));
+    const n=el('div','node '+(i<r.idx?'done':i===r.idx?'cur':''));
+    n.innerHTML=`<div class="nk">${i<r.idx?'✓ cleared':i===r.idx?'▶ next':'upcoming'}</div><div class="nn">${e.name}</div><div class="nthreat">${e.threat}</div>`;track.appendChild(n);});
+  const core=r.mech.parts.core;
+  $('#coreFill').style.width=(core.hp/core.maxHp*100||0)+'%';
+  $('#coreTxt').textContent=Math.round(core.hp)+' / '+Math.round(core.maxHp);
+  // part strip
+  const strip=$('#laneStrip');strip.innerHTML='';
+  for(const {slot,ps,p} of playerPartArray()){
+    if(slot==='core')continue;
+    const max=partMaxHp(p);const frac=ps.hp/max;
+    const chip=el('div','pchip '+(slot==='rarm'||slot==='larm'||slot==='backpack'?(isWeaponPart(p)?'weapon ':''):'')+(ps.disabled?'disabled':frac<0.5?'hurt':''));
+    chip.innerHTML=`<div class="pcl">${SLOT_LABEL[slot]}</div><div class="pcv">${ps.disabled?(isWeaponPart(p)?'DEGRADED':'DISABLED'):Math.round(ps.hp)}</div><div class="pcfill" style="width:${Math.max(0,frac*100)}%"></div>`;
+    strip.appendChild(chip);
+  }
+  $('#lightFill').style.width=Math.min(100,r.lightning)+'%';$('#lightTxt').textContent=Math.round(r.lightning)+' / 100';
+  const anyDisabled=playerPartArray().some(x=>x.ps.disabled);
+  const anyHurt=playerPartArray().some(x=>x.ps.hp<partMaxHp(x.p));
+  $('#repairBtn').disabled=r.lightning<25||!anyHurt;
+  $('#fullrepairBtn').disabled=r.lightning<35||!anyDisabled;
+  $('#prebuffBtn').disabled=r.lightning<25||!!r.prebuff;
+  $('#engageBtn').textContent='Engage: '+m.encounters[r.idx].name+' ▷';
+  $('#laneHint').textContent=r.idx===0?'Deploying fresh. Note the Core bar is your life — the part chips can be knocked out without killing you.':'Carried over from the last fight. A DEGRADED weapon fights at a fraction — Full-Repair it before the boss.';
+  renderRepairPanel();renderPrebuffPanel();
+}
+let repairOpen=false,prebuffOpen=false;
+function renderRepairPanel(){
+  const p=$('#repairPanel');p.innerHTML='';if(!repairOpen)return;const r=state.run;
+  const dis=playerPartArray().filter(x=>x.ps.disabled);
+  const box=el('div','repairpick');box.innerHTML='<div style="font-size:10px;color:var(--dim);letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px">Full-Repair which part?</div>';
+  dis.forEach(({slot,p:pt})=>{const b=el('button','pb',`◈ ${SLOT_LABEL[slot]} — ${pt.name} <span style="color:var(--dim)">· revive + full HP</span>`);
+    b.onclick=()=>{r.lightning-=35;r.lightningSpent+=35;r.mech.parts[slot]={hp:partMaxHp(pt),disabled:false};repairOpen=false;renderLane();};box.appendChild(b);});
+  p.appendChild(box);
+}
+function renderPrebuffPanel(){
+  const p=$('#prebuffPanel');p.innerHTML='';const r=state.run;
+  if(r.prebuff){p.innerHTML=`<div class="prebuffnote">◈ Pre-loaded: <b>${r.prebuff.name}</b> — +50% power, fires round 1.</div>`;return;}
+  if(!prebuffOpen)return;
+  const atks=[];for(const slot of SLOTS){const id=state.loadout[slot];if(id&&PART[id].ability&&PART[id].ability.type==='attack'&&!r.mech.parts[slot].disabled)atks.push({slot,a:PART[id].ability});}
+  const box=el('div','repairpick');box.innerHTML='<div style="font-size:10px;color:var(--dim);letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px">Spike which attack?</div>';
+  atks.forEach(({slot,a})=>{const b=el('button','pb',`◈ ${a.name} <span style="color:var(--dim)">· ${SLOT_LABEL[slot]}</span>`);
+    b.onclick=()=>{r.lightning-=25;r.lightningSpent+=25;r.prebuff={key:slot,name:a.name,mult:1.5};prebuffOpen=false;renderLane();};box.appendChild(b);});
+  p.appendChild(box);
+}
+$('#repairBtn').onclick=()=>{const r=state.run;r.lightning-=25;r.lightningSpent+=25;
+  for(const {slot,ps,p} of playerPartArray())if(!ps.disabled){ps.hp=Math.min(partMaxHp(p),ps.hp+partMaxHp(p)*0.4);}renderLane();};
+$('#fullrepairBtn').onclick=()=>{repairOpen=!repairOpen;renderRepairPanel();};
+$('#prebuffBtn').onclick=()=>{prebuffOpen=!prebuffOpen;renderPrebuffPanel();};
+$('#engageBtn').onclick=()=>engage();
+$('#laneAbort').onclick=()=>{state.run=null;show('garage');};
+
+/* ---------- SKIRMISH ---------- */
+let cutscene=null;
+function engage(){
+  const r=state.run;const enc=r.mission.encounters[r.idx];
+  const enemyDefs=enc.enemies.map(id=>EN[id]);
+  const seed=(r.missionIdx+1)*10007+r.idx*331+17;
+  const log=resolveSkirmish(r.mech,enemyDefs,seed,r.prebuff);
+  r.prebuff=null;playCutscene(log,enc);
+}
+const TYPELAB={mech:'Mech',trap:'Trap',tank:'Tank',sniper:'Sniper',swarm:'Bot',boss:'Boss'};
+function playCutscene(log,enc){
+  show('skirmish');$('#skName').textContent='▷ '+enc.name;$('#skEnd').innerHTML='';$('#skContinue').style.display='none';$('#skSkip').style.display='';$('#banner').innerHTML='&nbsp;';
+  const disp={},refs={};
+  const sideP=$('#sidePlayer'),sideE=$('#sideEnemy');sideP.innerHTML='';sideE.innerHTML='';
+  for(const u of log.units){
+    const card=el('div','ucard '+(u.side==='player'?'player':'enemy'));
+    let inner=`<div class="un">${u.name}<span class="corehp" data-core="${u.id}"></span></div><div class="utype">${TYPELAB[u.type]||'Unit'} · ARM ${u.armor} · SPD ${u.speed}</div><div class="corebar"><div class="corefill" data-corefill="${u.id}"></div></div>`;
+    if(u.mono){disp[u.id]={mono:true,hp:u.hp,max:u.maxHp};}
+    else{disp[u.id]={mono:false,parts:{}};
+      inner+='<div class="partstrip">';
+      for(const p of u.parts){disp[u.id].parts[p.key]={hp:p.startHp,max:p.maxHp,disabled:p.startDisabled,isWeapon:p.isWeapon,isCore:p.isCore};
+        if(p.isCore)continue;
+        inner+=`<div class="pchip ${p.isWeapon?'weapon ':''}" data-chip="${u.id}_${p.key}"><div class="pcl">${p.label}</div><div class="pcv" data-cv="${u.id}_${p.key}"></div><div class="pcfill" data-cf="${u.id}_${p.key}"></div></div>`;}
+      inner+='</div>';
+    }
+    card.innerHTML=inner;(u.side==='player'?sideP:sideE).appendChild(card);refs[u.id]=card;
+  }
+  function setUnit(id){
+    const d=disp[id],card=refs[id];
+    let coreHp,coreMax,dead;
+    if(d.mono){coreHp=d.hp;coreMax=d.max;dead=d.hp<=0;}
+    else{const c=d.parts[Object.keys(d.parts).find(k=>d.parts[k].isCore)];coreHp=c.hp;coreMax=c.max;dead=c.hp<=0;}
+    card.querySelector(`[data-corefill="${id}"]`).style.width=Math.max(0,coreHp/coreMax*100)+'%';
+    card.querySelector(`[data-core="${id}"]`).textContent=Math.round(coreHp);
+    card.classList.toggle('dead',dead);
+    if(!d.mono)for(const k in d.parts){if(d.parts[k].isCore)continue;const pp=d.parts[k];
+      const chip=card.querySelector(`[data-chip="${id}_${k}"]`);if(!chip)continue;
+      card.querySelector(`[data-cf="${id}_${k}"]`).style.width=Math.max(0,pp.hp/pp.max*100)+'%';
+      card.querySelector(`[data-cv="${id}_${k}"]`).textContent=pp.disabled?(pp.isWeapon?'DEGRADED':'DISABLED'):Math.round(pp.hp);
+      chip.classList.toggle('disabled',pp.disabled&&!pp.isWeapon);chip.classList.toggle('degraded',pp.disabled&&pp.isWeapon);
+      chip.classList.toggle('hurt',!pp.disabled&&pp.hp/pp.max<0.5);}
+  }
+  for(const id in disp)setUnit(id);
+  function floatNum(id,txt,color){const c=refs[id];if(!c)return;const f=el('span','float',txt);f.style.color=color;c.appendChild(f);setTimeout(()=>f.remove(),1000);}
+  function applyAction(a,instant){
+    if(!instant){Object.values(refs).forEach(c=>c.classList.remove('acting'));refs[a.actorId]&&refs[a.actorId].classList.add('acting');
+      $('#banner').innerHTML=`<span class="rd">R${a.round}</span>${a.actorName} ▸ ${a.abilityName}${a.broken?' <span style="color:var(--red)">(degraded)</span>':''}`;}
+    for(const t of a.targets){const d=disp[t.unitId];if(!d)continue;
+      if(t.heal){if(d.mono)d.hp=t.hpAfter;else d.parts[t.partKey].hp=t.hpAfter;}
+      else if(t.revived){d.parts[t.partKey].hp=t.hpAfter;d.parts[t.partKey].disabled=false;}
+      else{if(d.mono)d.hp=t.hpAfter;else{d.parts[t.partKey].hp=t.hpAfter;if(t.disabled)d.parts[t.partKey].disabled=true;}}
+      setUnit(t.unitId);
+      if(!instant){let txt,col;
+        if(t.heal){txt='+'+t.value;col='var(--lime)';}
+        else if(t.revived){txt='REPAIRED';col='var(--lime)';}
+        else if(t.blocked){txt='BLOCK';col='var(--violet)';}
+        else{txt='-'+t.value+(t.partLabel&&!d.mono?' '+t.partLabel:'');col=t.killed?'var(--red)':'var(--red)';}
+        floatNum(t.unitId,txt,col);
+        if(t.disabled&&!t.heal&&!t.revived)setTimeout(()=>floatNum(t.unitId,d.parts&&d.parts[t.partKey]&&d.parts[t.partKey].isWeapon?'DEGRADED!':'DISABLED!','var(--amber)'),240);}
+    }
+    if(!instant&&a.kind==='guard')floatNum(a.actorId,'GUARD ▲','var(--violet)');
+    if(!instant&&a.kind==='buff')floatNum(a.actorId,'FP +'+a.value,'var(--amber)');
+  }
+  let i=0,timer=null;
+  function finish(){Object.values(refs).forEach(c=>c.classList.remove('acting'));$('#banner').innerHTML='&nbsp;';
+    const win=log.result==='win';
+    $('#skEnd').innerHTML=`<div class="skirmend"><span class="st ${win?'win':'lose'}">${win?'SKIRMISH WON':'CORE DESTROYED'}</span></div>`;
+    $('#skSkip').style.display='none';$('#skContinue').style.display='';}
+  function play(){timer=setInterval(()=>{if(i>=log.flat.length){clearInterval(timer);finish();return;}applyAction(log.flat[i],false);i++;},820);}
+  $('#skSkip').onclick=()=>{if(timer)clearInterval(timer);for(;i<log.flat.length;i++)applyAction(log.flat[i],true);finish();};
+  $('#skContinue').onclick=()=>onResolved(log);
+  cutscene={log};play();
+}
+function onResolved(log){
+  const r=state.run;r.fights++;
+  r.mech.parts=Object.assign({},r.mech.parts);for(const slot in log.playerPartsAfter)r.mech.parts[slot]=log.playerPartsAfter[slot];
+  if(log.result==='lose'){return finishRun(false);}
+  r.idx++;r.lightning=Math.min(100,r.lightning+42);
+  if(r.idx>=r.mission.encounters.length)return finishRun(true);
+  r.lightning=Math.min(100,r.lightning+Math.round(r.mech.derived.charge*4));
+  show('lane');renderLane();
+}
+function finishRun(win){
+  const r=state.run;const core=r.mech.parts.core;
+  $('#rTitle').textContent=win?'RUN CLEARED':'CORE DESTROYED';$('#rTitle').className='rtitle '+(win?'win':'lose');
+  $('#rSub').textContent=(win?'lane secured — ':'wreckage recovered — ')+r.mission.name;
+  $('#rFights').textContent=r.fights;$('#rCore').textContent=Math.round(core.hp/core.maxHp*100)+'%';$('#rLight').textContent=r.lightningSpent;
+  $('#rHint').textContent=win?'Try aiming attacks at enemy weapons to disable them, or a tankier Core for a rougher run.':'Tip: aim your big hit at the deadliest enemy — kill its Core, or disable its Weapon. Full-Repair knocked-out parts between fights.';
+  show('result');
+}
+$('#rRetry').onclick=()=>startRun(state.run.missionIdx);
+$('#rGarage').onclick=()=>show('garage');
+
+/* ---------- ROUTER ---------- */
+function show(name){for(const s of document.querySelectorAll('.screen'))s.classList.toggle('active',s.id===name);
+  if(cutscene&&name!=='skirmish')cutscene=null;
+  if(name==='garage'){renderFrame();renderParts();renderStats();renderTactics();validate();}
+  if(name==='mission')renderMissions();window.scrollTo({top:0});}
+equipDone();
+
+/* ---------- info / how-to-play ---------- */
+function openInfo(){$('#infoModal').classList.add('open');}
+function closeInfo(){$('#infoModal').classList.remove('open');}
+$('#infoBtn').onclick=openInfo;
+$('#infoClose').onclick=closeInfo;
+$('#infoGo').onclick=closeInfo;
+$('#infoModal').addEventListener('click',e=>{if(e.target===$('#infoModal'))closeInfo();});
+window.addEventListener('keydown',e=>{if(e.key==='Escape')closeInfo();});
+openInfo(); // greet newcomers with the primer on first load
+</script>

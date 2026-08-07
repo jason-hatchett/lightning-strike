@@ -1,0 +1,783 @@
+<title>Lightning Strike — Prototype v0.2</title>
+<style>
+  :root{
+    --bg:#070a12; --bg2:#0c1120; --panel:#111a2e; --panel2:#0e1526;
+    --line:#22314f; --line2:#2f4570; --ink:#cdd8f2; --dim:#6f81a8;
+    --cyan:#22e0ff; --cyan-dim:#0c7f96; --mag:#ff2e88; --amber:#ffd23e;
+    --lime:#7dff6b; --red:#ff5a5a; --violet:#b98cff;
+    --mono:ui-monospace,"Cascadia Mono","Cascadia Code",Menlo,Consolas,"DejaVu Sans Mono",monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    background:radial-gradient(1200px 600px at 50% -10%, #14203a 0%, transparent 60%), var(--bg);
+    color:var(--ink); font-family:var(--mono); font-size:14px; line-height:1.45;
+    -webkit-font-smoothing:antialiased; overflow-x:hidden;
+  }
+  body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;
+    background:repeating-linear-gradient(0deg, rgba(0,0,0,0.16) 0 1px, transparent 1px 3px);
+    mix-blend-mode:multiply;opacity:.45;}
+  .wrap{max-width:1060px;margin:0 auto;padding:20px 16px 60px}
+
+  .mast{display:flex;align-items:baseline;justify-content:space-between;gap:16px;
+    border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:16px;flex-wrap:wrap}
+  .logo{font-weight:800;font-size:25px;letter-spacing:.14em;margin:0;color:var(--amber);
+    text-shadow:0 0 16px rgba(255,210,62,.5)}
+  .logo .b{color:var(--cyan);text-shadow:0 0 16px rgba(34,224,255,.5)}
+  .tagline{color:var(--dim);letter-spacing:.16em;text-transform:uppercase;font-size:11px}
+  .phasebadge{border:1px solid var(--line2);color:var(--dim);padding:3px 9px;border-radius:2px;
+    font-size:10px;letter-spacing:.16em;text-transform:uppercase}
+
+  .screen{display:none} .screen.active{display:block;animation:fade .3s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){.screen.active{animation:none}*{transition:none!important}}
+  h2.head{font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);margin:0 0 10px;font-weight:700}
+  .panel{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:6px;padding:16px}
+
+  /* ---------- GARAGE ---------- */
+  .garage{display:grid;grid-template-columns:1fr 1.1fr;gap:16px}
+  @media (max-width:840px){.garage{grid-template-columns:1fr}}
+
+  .frame{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px}
+  .slotbtn{border:1px solid var(--line);border-radius:5px;background:var(--panel2);padding:9px 8px;
+    cursor:pointer;text-align:center;transition:.14s;min-height:56px;display:flex;flex-direction:column;justify-content:center}
+  .slotbtn:hover{border-color:var(--line2)}
+  .slotbtn.sel{border-color:var(--cyan);box-shadow:0 0 12px rgba(34,224,255,.22);background:rgba(34,224,255,.06)}
+  .slotbtn .sl{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+  .slotbtn .eq{font-size:11px;color:var(--ink);margin-top:3px;font-weight:700}
+  .slotbtn .eq.empty{color:var(--dim);font-weight:400}
+  .slotbtn .ab{font-size:9px;color:var(--amber);margin-top:2px;letter-spacing:.03em}
+  .fr-head{grid-column:2} .fr-bp{grid-column:3;grid-row:1}
+  .fr-rarm{grid-column:1;grid-row:2} .fr-core{grid-column:2;grid-row:2} .fr-larm{grid-column:3;grid-row:2}
+  .fr-legs{grid-column:2;grid-row:3}
+
+  .stat{display:grid;grid-template-columns:74px 1fr 64px;align-items:center;gap:10px;margin:6px 0}
+  .stat .lbl{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+  .track{height:9px;background:#0a1120;border:1px solid var(--line);border-radius:2px;position:relative;overflow:hidden}
+  .fill{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,var(--cyan-dim),var(--cyan));
+    box-shadow:0 0 8px rgba(34,224,255,.4) inset;transition:width .18s ease}
+  .fill.up{background:linear-gradient(90deg,var(--cyan),var(--lime))}
+  .ghost{position:absolute;top:0;bottom:0;border-right:2px dashed var(--amber);opacity:.9}
+  .val{font-variant-numeric:tabular-nums;text-align:right;font-size:12px}
+  .val .delta{font-size:11px;margin-left:5px} .delta.pos{color:var(--lime)} .delta.neg{color:var(--red)}
+
+  .tactics{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
+  .tacrow{display:grid;grid-template-columns:1fr 150px;gap:8px;align-items:center;margin:7px 0}
+  .tacrow .an{font-size:12px}
+  .tacrow .an .tag{font-size:9px;letter-spacing:.1em;text-transform:uppercase;padding:1px 5px;border-radius:2px;
+    border:1px solid var(--line2);color:var(--dim);margin-right:6px}
+  .tacrow .an .slotname{color:var(--dim);font-size:10px}
+  select{font-family:var(--mono);font-size:11px;background:var(--panel2);color:var(--ink);
+    border:1px solid var(--line2);border-radius:3px;padding:5px 6px;width:100%}
+  .tac-empty{color:var(--dim);font-size:11px}
+
+  .parts{display:flex;flex-direction:column;gap:8px;max-height:520px;overflow-y:auto;padding-right:4px}
+  .part{border:1px solid var(--line);border-radius:5px;padding:10px 12px;cursor:pointer;background:var(--panel2);transition:.14s;position:relative}
+  .part:hover{border-color:var(--cyan);background:rgba(34,224,255,.05)}
+  .part.equipped{border-color:var(--lime);box-shadow:inset 0 0 0 1px rgba(125,255,107,.25)}
+  .part .pn{font-weight:700;color:var(--ink)}
+  .part .arch{font-size:9px;letter-spacing:.12em;text-transform:uppercase;padding:2px 6px;border-radius:2px;border:1px solid var(--line2);color:var(--dim);float:right}
+  .part .abil{font-size:11px;color:var(--amber);margin-top:5px}
+  .part .abil .ai{color:var(--dim)}
+  .part .chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
+  .chip{font-size:10px;font-variant-numeric:tabular-nums;padding:1px 6px;border-radius:2px;border:1px solid var(--line);color:var(--ink)}
+  .chip.pos{color:var(--lime);border-color:rgba(125,255,107,.3)} .chip.neg{color:var(--red);border-color:rgba(255,90,90,.3)}
+  .part .cross{position:absolute;top:9px;right:74px;font-size:9px;color:var(--amber)}
+
+  .btnrow{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+  .btn{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;padding:11px 18px;
+    border-radius:4px;cursor:pointer;border:1px solid var(--line2);background:var(--panel2);color:var(--ink);transition:.15s;font-weight:700}
+  .btn:hover{border-color:var(--cyan);color:var(--cyan)}
+  .btn.primary{background:linear-gradient(180deg,rgba(255,210,62,.18),rgba(255,210,62,.05));border-color:var(--amber);color:var(--amber);text-shadow:0 0 8px rgba(255,210,62,.4)}
+  .btn.primary:hover{box-shadow:0 0 18px rgba(255,210,62,.25)}
+  .btn.ghostbtn{background:transparent;border-color:var(--line)}
+  .btn:disabled{opacity:.4;cursor:not-allowed;border-color:var(--line);color:var(--dim)}
+  .warn{color:var(--amber);font-size:11px;margin-top:8px;min-height:16px}
+
+  /* ---------- MISSION SELECT ---------- */
+  .missions{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+  @media (max-width:680px){.missions{grid-template-columns:1fr}}
+  .mcard{border:1px solid var(--line);border-radius:6px;padding:16px;background:var(--panel2);cursor:pointer;transition:.15s}
+  .mcard:hover{border-color:var(--cyan);box-shadow:0 0 18px rgba(34,224,255,.14);transform:translateY(-2px)}
+  .mcard .mno{font-size:10px;letter-spacing:.2em;color:var(--dim)}
+  .mcard .mt{font-size:17px;font-weight:800;letter-spacing:.05em;margin:4px 0 8px;color:var(--cyan)}
+  .mcard .md{font-size:12px;color:var(--dim);min-height:40px}
+  .mcard .enc{font-size:10px;color:var(--dim);margin-top:10px;letter-spacing:.04em}
+  .diff{display:inline-flex;gap:3px;margin-top:10px}
+  .pip{width:9px;height:9px;border-radius:1px;border:1px solid var(--line2)}
+  .pip.on{background:var(--mag);border-color:var(--mag);box-shadow:0 0 6px rgba(255,46,136,.6)}
+
+  /* ---------- LANE ---------- */
+  .lanewrap{display:grid;grid-template-columns:1fr 320px;gap:16px}
+  @media (max-width:820px){.lanewrap{grid-template-columns:1fr}}
+  .lanetrack{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:6px 0 18px}
+  .node{border:1px solid var(--line2);border-radius:5px;padding:9px 12px;background:var(--panel2);min-width:120px}
+  .node.done{opacity:.5;border-color:var(--lime)} .node.cur{border-color:var(--amber);box-shadow:0 0 14px rgba(255,210,62,.25)}
+  .node .nk{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+  .node .nn{font-size:12px;font-weight:700;margin-top:2px}
+  .node .nthreat{font-size:10px;color:var(--mag);margin-top:3px}
+  .arrow{color:var(--dim)}
+  .meters .m{margin:10px 0}
+  .mlabel{display:flex;justify-content:space-between;font-size:10px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px}
+  .mlabel .l{color:var(--dim)} .mlabel.integ .l{color:var(--cyan)} .mlabel.light .l{color:var(--amber)}
+  .bigtrack{height:14px;border:1px solid var(--line2);border-radius:3px;background:#0a1120;position:relative;overflow:hidden}
+  .bigfill{position:absolute;inset:0 auto 0 0;transition:width .3s ease}
+  .bigfill.integ{background:linear-gradient(90deg,#0c7f96,var(--cyan));box-shadow:0 0 8px rgba(34,224,255,.4) inset}
+  .bigfill.light{background:linear-gradient(90deg,#8a6a00,var(--amber));box-shadow:0 0 8px rgba(255,210,62,.4) inset}
+  .laneact{display:flex;flex-direction:column;gap:9px;margin-top:14px}
+  .laneact .btn{width:100%;text-align:left;display:flex;justify-content:space-between;align-items:center}
+  .cost{color:var(--amber);font-size:11px}
+  .prebuffpick{border:1px solid var(--line2);border-radius:5px;padding:10px;margin-top:8px;background:var(--panel2)}
+  .prebuffpick .pb{display:block;width:100%;text-align:left;margin:5px 0;background:var(--panel);border:1px solid var(--line);border-radius:3px;color:var(--ink);padding:7px 9px;cursor:pointer;font-family:var(--mono);font-size:11px}
+  .prebuffpick .pb:hover{border-color:var(--amber)}
+  .prebuffnote{color:var(--lime);font-size:11px;margin-top:6px}
+
+  /* ---------- SKIRMISH ---------- */
+  .arena{border:1px solid var(--line);border-radius:6px;background:var(--bg2);overflow:hidden}
+  .atop{display:flex;justify-content:space-between;padding:8px 14px;border-bottom:1px solid var(--line);font-size:11px;color:var(--dim);letter-spacing:.1em}
+  .atop .an{color:var(--cyan);text-transform:uppercase;letter-spacing:.14em}
+  .field{display:grid;grid-template-columns:1fr 40px 1.3fr;gap:12px;padding:18px 16px;min-height:220px;align-items:center}
+  @media (max-width:680px){.field{grid-template-columns:1fr;gap:16px}}
+  .side{display:flex;flex-direction:column;gap:10px}
+  .vs{text-align:center;color:var(--dim);font-weight:800;letter-spacing:.1em}
+  .ucard{border:1px solid var(--line);border-radius:6px;padding:11px 12px;background:var(--panel2);position:relative;transition:.15s}
+  .ucard.player{border-color:var(--cyan-dim)} .ucard.dead{opacity:.35;filter:grayscale(.6)}
+  .ucard.acting{border-color:var(--amber);box-shadow:0 0 18px rgba(255,210,62,.35);transform:translateY(-2px)}
+  .ucard .un{font-weight:700;font-size:13px;display:flex;justify-content:space-between}
+  .ucard .utype{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+  .ubar{height:11px;border:1px solid var(--line);border-radius:2px;background:#0a1120;position:relative;overflow:hidden;margin-top:7px}
+  .ubarfill{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,#2a7d3a,var(--lime));transition:width .35s ease}
+  .ucard.enemy .ubarfill{background:linear-gradient(90deg,#7d2a4a,var(--mag))}
+  .ucard .ustats{display:flex;gap:10px;font-size:10px;color:var(--dim);margin-top:6px;font-variant-numeric:tabular-nums}
+  .ucard .uhp{font-size:10px;color:var(--ink);font-variant-numeric:tabular-nums}
+  .guardpip{color:var(--violet)}
+  .float{position:absolute;right:10px;top:6px;font-weight:800;font-size:16px;pointer-events:none;animation:floatup 1s ease forwards;text-shadow:0 0 8px currentColor}
+  @keyframes floatup{0%{opacity:0;transform:translateY(6px)}20%{opacity:1}100%{opacity:0;transform:translateY(-22px)}}
+  .banner{min-height:34px;text-align:center;padding:6px 12px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+    letter-spacing:.06em;font-weight:700;color:var(--amber);background:rgba(255,210,62,.05)}
+  .banner .rd{color:var(--dim);font-weight:400;margin-right:8px;letter-spacing:.14em}
+  .acontrols{display:flex;gap:10px;padding:12px 14px;justify-content:flex-end;align-items:center}
+  .skirmend{text-align:center;padding:10px 0 4px}
+  .skirmend .st{font-size:22px;font-weight:800;letter-spacing:.1em}
+  .st.win{color:var(--lime);text-shadow:0 0 16px rgba(125,255,107,.4)} .st.lose{color:var(--red);text-shadow:0 0 16px rgba(255,90,90,.4)}
+
+  /* ---------- RESULT ---------- */
+  .result{max-width:560px;margin:20px auto;text-align:center;border:1px solid var(--line);border-radius:8px;padding:28px 24px;background:var(--panel2)}
+  .rtitle{font-size:32px;font-weight:800;letter-spacing:.12em;margin:0 0 4px}
+  .rtitle.win{color:var(--lime);text-shadow:0 0 20px rgba(125,255,107,.5)} .rtitle.lose{color:var(--red);text-shadow:0 0 20px rgba(255,90,90,.5)}
+  .rsub{color:var(--dim);letter-spacing:.12em;text-transform:uppercase;font-size:11px;margin-bottom:18px}
+  .rstats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:16px 0 6px}
+  .rstat{border:1px solid var(--line);border-radius:5px;padding:12px}
+  .rstat .rv{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--cyan)}
+  .rstat .rl{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-top:2px}
+  .hint{color:var(--dim);font-size:11px;margin-top:12px}
+  .footnote{margin-top:30px;border-top:1px solid var(--line);padding-top:14px;color:var(--dim);font-size:11px}
+  .kbd{border:1px solid var(--line2);border-radius:2px;padding:0 5px;color:var(--ink);font-size:11px}
+  b.cy{color:var(--cyan)} b.am{color:var(--amber)}
+</style>
+
+<div class="wrap">
+  <header class="mast">
+    <div>
+      <h1 class="logo">⚡ LIGHTNING <span class="b">STRIKE</span></h1>
+      <div class="tagline">Build the mech · set its instincts · watch it strike</div>
+    </div>
+    <div class="phasebadge">Prototype v0.2 · Phases 0–3 · single lane</div>
+  </header>
+
+  <!-- GARAGE -->
+  <section id="garage" class="screen active">
+    <div class="garage">
+      <div class="panel">
+        <h2 class="head">Chassis · click a slot to configure</h2>
+        <div class="frame" id="frame"></div>
+        <div id="statPanel"></div>
+        <div class="tactics">
+          <h2 class="head">Abilities &amp; Tactics · when should each fire?</h2>
+          <div id="tacticsList"></div>
+        </div>
+        <div class="btnrow">
+          <button class="btn primary" id="toDeploy">Deploy ▷</button>
+          <button class="btn ghostbtn" id="randomBtn">Randomize</button>
+          <button class="btn ghostbtn" id="resetBtn">Reset</button>
+        </div>
+        <div class="warn" id="garageWarn"></div>
+      </div>
+      <div class="panel">
+        <h2 class="head" id="partsHead">Parts</h2>
+        <div class="parts" id="partList"></div>
+      </div>
+    </div>
+    <div class="footnote">
+      <b class="cy">The pitch to feedback:</b> combat is <i>hands-off</i>. Everything you decide happens here —
+      which parts (stats + one ability each) and <b class="am">when each ability fires</b> (its tactic). Then you watch it play out.
+      The tactics choice is the point: on <b>Mission 3</b> the default targeting loses, but re-aiming your big hit wins.
+    </div>
+  </section>
+
+  <!-- MISSION SELECT -->
+  <section id="mission" class="screen">
+    <h2 class="head">Select Deployment · integrity persists across each lane run</h2>
+    <div class="missions" id="missionCards"></div>
+    <div class="btnrow"><button class="btn ghostbtn" id="backToGarage">◁ Back to garage</button></div>
+  </section>
+
+  <!-- LANE -->
+  <section id="lane" class="screen">
+    <div class="lanewrap">
+      <div class="panel">
+        <h2 class="head" id="laneName">Lane Run</h2>
+        <div class="lanetrack" id="laneTrack"></div>
+        <div class="meters">
+          <div class="m">
+            <div class="mlabel integ"><span class="l">Integrity — persists between fights</span><span id="integTxt"></span></div>
+            <div class="bigtrack"><div class="bigfill integ" id="integFill"></div></div>
+          </div>
+          <div class="m">
+            <div class="mlabel light"><span class="l">⚡ Lightning in a Bottle</span><span id="lightTxt"></span></div>
+            <div class="bigtrack"><div class="bigfill light" id="lightFill"></div></div>
+          </div>
+        </div>
+        <p class="hint" id="laneHint"></p>
+      </div>
+      <div class="panel">
+        <h2 class="head">Between-fight actions</h2>
+        <div class="laneact">
+          <button class="btn ghostbtn" id="repairBtn"><span>Repair +35% integrity</span><span class="cost">30 ⚡</span></button>
+          <button class="btn ghostbtn" id="prebuffBtn"><span>Pre-load an ability</span><span class="cost">25 ⚡</span></button>
+          <div id="prebuffPanel"></div>
+          <button class="btn primary" id="engageBtn">Engage ▷</button>
+        </div>
+        <p class="hint">Lightning charges as you advance and win. Spend it here — never mid-fight. Repair to beat attrition; pre-load to spike one ability's power and guarantee it fires round one.</p>
+      </div>
+    </div>
+    <div class="btnrow"><button class="btn ghostbtn" id="laneAbort">◁ Abort to garage</button></div>
+  </section>
+
+  <!-- SKIRMISH -->
+  <section id="skirmish" class="screen">
+    <div class="arena">
+      <div class="atop"><span class="an" id="skName">Skirmish</span><span id="skRounds"></span></div>
+      <div class="banner" id="banner">&nbsp;</div>
+      <div class="field">
+        <div class="side" id="sidePlayer"></div>
+        <div class="vs">VS</div>
+        <div class="side" id="sideEnemy"></div>
+      </div>
+      <div id="skEnd"></div>
+      <div class="acontrols">
+        <button class="btn ghostbtn" id="skSkip">Skip ▸▸</button>
+        <button class="btn primary" id="skContinue" style="display:none">Continue ▷</button>
+      </div>
+    </div>
+    <div class="hint">You set this up in the garage — now it resolves on its own. Deterministic: skip and watch reach the same result.</div>
+  </section>
+
+  <!-- RESULT -->
+  <section id="result" class="screen">
+    <div class="result">
+      <div class="rtitle" id="rTitle">RUN CLEARED</div>
+      <div class="rsub" id="rSub"></div>
+      <div class="rstats">
+        <div class="rstat"><div class="rv" id="rFights">0</div><div class="rl">Skirmishes</div></div>
+        <div class="rstat"><div class="rv" id="rInteg">0%</div><div class="rl">Integrity left</div></div>
+        <div class="rstat"><div class="rv" id="rLight">0</div><div class="rl">Lightning spent</div></div>
+      </div>
+      <div class="btnrow" style="justify-content:center">
+        <button class="btn primary" id="rRetry">Run it back</button>
+        <button class="btn ghostbtn" id="rGarage">◁ Garage</button>
+      </div>
+      <div class="hint" id="rHint"></div>
+    </div>
+  </section>
+</div>
+
+<script>
+"use strict";
+/* ============================================================
+   LIGHTNING STRIKE — v0.2 prototype (Phases 0–3)
+   Deterministic round-based auto-resolve. Sim -> SkirmishLog -> cutscene playback.
+   ============================================================ */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+
+/* ---------- combat constants ---------- */
+const FP_SCALE=0.8, ARMOR_DIV=130, ARMOR_CAP=0.6, CHIP=3, MULTI_MULT=0.6, VAR=0.12, MAX_ROUNDS=16;
+
+/* ---------- conditions ---------- */
+const CONDITIONS = {
+  'always':                 {label:'Always'},
+  'target-lowest-integrity':{label:'Target: weakest'},
+  'target-most-armor':      {label:'Target: toughest'},
+  'target-highest-firepower':{label:'Target: deadliest'},
+  'when-2plus-enemies':     {label:'If 2+ foes'},
+  'when-self-below-50':     {label:'If I\'m hurt (<50%)'},
+  'first-round-only':       {label:'First round only'},
+};
+const TARGETING_CONDS = ['target-lowest-integrity','target-most-armor','target-highest-firepower'];
+
+/* ---------- ability helper ---------- */
+// type: attack|defense|heal|buff ; targeting: single|multi|self
+function ab(name,type,power,opts={}){return Object.assign({name,type,power,
+  targeting:opts.targeting||(type==='attack'?'single':'self'),
+  cooldown:opts.cooldown||0, defaultCondition:opts.cond||'always'},opts);}
+
+/* ---------- PARTS (6 slots) ---------- */
+const S=(o)=>Object.assign({integrity:0,firepower:0,armor:0,speed:0,charge:0},o);
+const PARTS = [
+  // HEAD
+  {id:'hawkeye',slot:'head',name:'HAWKEYE FCS',arch:'utility',stats:S({firepower:8,charge:0.4}),
+    ability:ab('Lock-On','buff',10,{cooldown:3,cond:'first-round-only'})},
+  {id:'iris',slot:'head',name:'IRIS Optics',arch:'utility',stats:S({charge:0.6,armor:6})},
+  {id:'owl',slot:'head',name:'OWL Sensor',arch:'utility',stats:S({speed:6,charge:0.4})},
+  // CORE
+  {id:'bastion',slot:'core',name:'BASTION Core',arch:'chassis',stats:S({integrity:120,armor:14,speed:-3})},
+  {id:'runner',slot:'core',name:'RUNNER Core',arch:'chassis',stats:S({integrity:70,speed:6,charge:0.8})},
+  {id:'reactor',slot:'core',name:'REACTOR-X Core',arch:'chassis',stats:S({integrity:90,charge:1.6,armor:-4}),
+    ability:ab('Reactor Vent','heal',34,{cooldown:4,cond:'when-self-below-50'})},
+  // R-ARM (weapon, always attack)
+  {id:'vulcan',slot:'rarm',name:'VULCAN Rifle',arch:'kinetic',stats:S({firepower:15}),
+    ability:ab('Burst Fire','attack',18,{cooldown:0,cond:'always'})},
+  {id:'plasma',slot:'rarm',name:'PLASMA Blade',arch:'energy',stats:S({firepower:24,speed:2}),
+    ability:ab('Overhead Slash','attack',44,{cooldown:2,cond:'always'})},
+  {id:'gatling',slot:'rarm',name:'GATLING Arm',arch:'kinetic',stats:S({firepower:12}),
+    ability:ab('Suppress','attack',15,{targeting:'multi',cooldown:1,cond:'when-2plus-enemies'})},
+  // L-ARM (weapon or shield; missile/shield cross-fit backpack)
+  {id:'saber',slot:'larm',name:'SABER',arch:'energy',stats:S({firepower:14,speed:2}),
+    ability:ab('Riposte','attack',26,{cooldown:1,cond:'always'})},
+  {id:'shieldarm',slot:'larm',name:'SHIELD Arm',arch:'shield',alsoFits:['backpack'],stats:S({armor:18,integrity:40}),
+    ability:ab('Raise Guard','defense',34,{cooldown:1,cond:'when-self-below-50'})},
+  {id:'missarm',slot:'larm',name:'MISSILE Arm',arch:'explosive',alsoFits:['backpack'],stats:S({firepower:6}),
+    ability:ab('Missile Volley','attack',20,{targeting:'multi',cooldown:1,cond:'always'})},
+  // BACKPACK
+  {id:'misspod',slot:'backpack',name:'MISSILE Pod',arch:'explosive',stats:S({firepower:8}),
+    ability:ab('Salvo','attack',16,{targeting:'multi',cooldown:1,cond:'always'})},
+  {id:'shpack',slot:'backpack',name:'SHIELD Pack',arch:'shield',stats:S({armor:10,integrity:50}),
+    ability:ab('Barrier','defense',44,{cooldown:2,cond:'when-self-below-50'})},
+  {id:'repairpod',slot:'backpack',name:'REPAIR Pod',arch:'utility',stats:S({charge:0.8}),
+    ability:ab('Nanorepair','heal',26,{cooldown:3,cond:'when-self-below-50'})},
+  {id:'drone',slot:'backpack',name:'DRONE Bay',arch:'utility',stats:S({charge:0.6,firepower:4}),
+    ability:ab('Drone Strike','attack',12,{cooldown:0,cond:'always'})},
+  {id:'thrust',slot:'backpack',name:'THRUSTER Pack',arch:'mobility',stats:S({speed:10,charge:0.5})},
+  // LEGS
+  {id:'sprint',slot:'legs',name:'SPRINT Legs',arch:'mobility',stats:S({speed:12})},
+  {id:'tread',slot:'legs',name:'TANK Treads',arch:'mobility',stats:S({integrity:90,armor:20,speed:-5})},
+  {id:'spider',slot:'legs',name:'SPIDER Legs',arch:'mobility',stats:S({armor:8,speed:3}),
+    ability:ab('Skitter','defense',22,{cooldown:2,cond:'when-self-below-50'})},
+];
+const PART=Object.fromEntries(PARTS.map(p=>[p.id,p]));
+const SLOTS=['head','core','rarm','larm','backpack','legs'];
+const SLOT_LABEL={head:'Head',core:'Core',rarm:'R-Arm',larm:'L-Arm',backpack:'Backpack',legs:'Legs'};
+const fitsSlot=(p,s)=>p.slot===s||(p.alsoFits&&p.alsoFits.includes(s));
+const partsForSlot=(s)=>PARTS.filter(p=>fitsSlot(p,s));
+
+const BASE={integrity:80,firepower:10,armor:0,speed:10,charge:1.0};
+const STAT_META=[
+  {k:'integrity',label:'Integrity',max:400},
+  {k:'firepower',label:'Firepower',max:80},
+  {k:'armor',label:'Armor',max:70},
+  {k:'speed',label:'Speed',max:44},
+  {k:'charge',label:'Charge',max:5},
+];
+function derive(loadout,tactics){
+  const d=Object.assign({},BASE); const abilities=[];
+  for(const slot of SLOTS){
+    const id=loadout[slot]; if(!id)continue; const p=PART[id];
+    for(const k in p.stats) d[k]+=p.stats[k];
+    if(p.ability){
+      const cond=(tactics&&tactics[slot])||p.ability.defaultCondition;
+      abilities.push(Object.assign({},p.ability,{slot,key:slot,condition:cond}));
+    }
+  }
+  d.integrity=Math.max(1,d.integrity); d.firepower=Math.max(0,d.firepower);
+  d.armor=Math.max(0,d.armor); d.speed=Math.max(1,d.speed); d.charge=Math.max(0.2,d.charge);
+  d.abilities=abilities; d.maxInteg=d.integrity;
+  return d;
+}
+
+/* ---------- ENEMIES ---------- */
+function E(name,type,integ,fp,armor,speed,abils){
+  return {name,type,maxInteg:integ,integ,firepower:fp,armor,speed,
+    abilities:abils.map((a,i)=>Object.assign({key:'e'+i,condition:a.cond||a.defaultCondition||'always'},a))};
+}
+function enemyProto(def){ // fresh copy
+  return {name:def.name,type:def.type,maxInteg:def.maxInteg,integ:def.maxInteg,
+    firepower:def.firepower,armor:def.armor,speed:def.speed,
+    abilities:def.abilities.map(a=>Object.assign({},a))};
+}
+const EN = {
+  scrap:  E('SCRAP MECH','mech',130,8,6,8,[ab('Rusty Cannon','attack',16,{cond:'always'})]),
+  turret: E('TURRET NEST','trap',120,0,22,20,[ab('Auto-Turret','attack',15,{cond:'always'})]),
+  line:   E('LINE MECH','mech',170,12,12,9,[ab('Rifle','attack',16,{cond:'always'}),ab('Missile','attack',26,{cooldown:2,cond:'always'})]),
+  tank:   E('SIEGE TANK','tank',260,8,55,6,[ab('Siege Gun','attack',18,{cooldown:1,cond:'always'})]),
+  sniper: E('RAIL SNIPER','sniper',145,30,10,15,[ab('Railshot','attack',34,{cooldown:0,cond:'target-lowest-integrity'})]),
+  bot:    E('MINI-BOT','swarm',40,8,0,12,[ab('Zap','attack',10,{cond:'always'})]),
+  bruiser:E('BRUISER','mech',185,16,20,7,[ab('Hammer','attack',26,{cooldown:1,cond:'always'}),ab('Stomp','attack',14,{cond:'always'})]),
+  warden: E('THE WARDEN','boss',300,18,26,10,[
+            ab('Twin Cannon','attack',18,{cooldown:0,cond:'always'}),
+            ab('Overload Beam','attack',40,{cooldown:3,cond:'target-lowest-integrity'}),
+            ab('Siege Bulwark','defense',34,{cooldown:3,cond:'when-self-below-50'})]),
+};
+const MISSIONS=[
+  {id:0,name:'FIRST CONTACT',diff:1,desc:'One lane, one duel. Build a mech, send it, watch the parts fight for you.',
+    encounters:[{name:'Scrap Mech',threat:'Light',enemies:['scrap']}]},
+  {id:1,name:'THE GAUNTLET',diff:2,desc:'A turret nest chips you, then a mech duel — with your wounds carried over. Repair with Lightning.',
+    encounters:[{name:'Turret Nest',threat:'Trap',enemies:['turret']},{name:'Line Mech',threat:'Medium',enemies:['line']}]},
+  {id:2,name:'CROSSFIRE',diff:3,desc:'A tank you can\'t crack fast + a sniper that will delete you. Default aim loses. Re-target your big hit.',
+    encounters:[{name:'Tank + Sniper',threat:'Tactics',enemies:['tank','sniper']}]},
+  {id:3,name:'THE WARDEN',diff:3,desc:'Three fights, no breaks between but Lightning: a swarm, a bruiser, then the boss. Full kit.',
+    encounters:[{name:'Bot Swarm',threat:'Swarm',enemies:['bot','bot','bot']},{name:'Bruiser',threat:'Heavy',enemies:['bruiser']},{name:'The Warden',threat:'BOSS',enemies:['warden']}]},
+];
+
+/* ============================================================
+   SIM — resolveSkirmish (pure, deterministic)
+   ============================================================ */
+function cloneForSim(u,side,id){
+  return {id,side,name:u.name,type:u.type||(side==='player'?'mech':'mech'),
+    integ:(side==='player'?u.integ:u.maxInteg), maxInteg:u.maxInteg,
+    firepower:u.firepower,armor:u.armor,speed:u.speed,guard:0,cds:{},
+    abilities:(side==='player'?u.abilities:u.abilities).map(a=>Object.assign({},a))};
+}
+function condFiringMet(cond,unit,foes,round){
+  switch(cond){
+    case 'first-round-only': return round===1;
+    case 'when-self-below-50': return unit.integ < 0.5*unit.maxInteg;
+    case 'when-2plus-enemies': return foes.length>=2;
+    default: return true; // always + targeting conds always fire
+  }
+}
+function chooseTarget(cond,foes){
+  if(cond==='target-lowest-integrity') return foes.reduce((a,b)=>b.integ<a.integ?b:a);
+  if(cond==='target-most-armor')       return foes.reduce((a,b)=>b.armor>a.armor?b:a);
+  if(cond==='target-highest-firepower')return foes.reduce((a,b)=>b.firepower>a.firepower?b:a);
+  return foes[0];
+}
+function resolveSkirmish(playerUnit, enemyUnits, seed, prebuff){
+  const rng=mulberry32(seed>>>0);
+  const P=cloneForSim(playerUnit,'player','P');
+  const Es=enemyUnits.map((e,i)=>cloneForSim(e,'enemy','E'+i));
+  const all=()=>[P,...Es];
+  const alive=arr=>arr.filter(u=>u.integ>0);
+  const units0=all().map(u=>({id:u.id,name:u.name,side:u.side,type:u.type,maxInteg:u.maxInteg,startInteg:u.integ,
+    firepower:u.firepower,armor:u.armor,speed:u.speed}));
+  const flat=[]; let result=null;
+
+  for(let round=1;round<=MAX_ROUNDS;round++){
+    if(P.integ<=0){result='lose';break;}
+    if(alive(Es).length===0){result='win';break;}
+    const order=alive(all()).slice().sort((a,b)=>(b.speed-a.speed)||(a.side==='player'?-1:1));
+    for(const u of order){
+      if(u.integ<=0) continue;
+      const foes=u.side==='player'?alive(Es):(P.integ>0?[P]:[]);
+      if(foes.length===0) continue;
+      u.guard=0; // protects until this unit's next turn
+      // fire every eligible ability (support first, then attacks)
+      const ordered=u.abilities.slice().sort((a,b)=>prio(a)-prio(b));
+      for(const A of ordered){
+        if((u.cds[A.key]||0)>0) continue;
+        const isPB=(u.side==='player'&&prebuff&&prebuff.key===A.key&&round===1);
+        if(!isPB && !condFiringMet(A.condition,u,foes,round)) continue;
+        const live=u.side==='player'?alive(Es):(P.integ>0?[P]:[]);
+        if((A.type==='attack')&&live.length===0) break;
+        const act=applyAbility(u,A,live,rng,round,isPB?prebuff.mult:1);
+        u.cds[A.key]=A.cooldown||0;
+        flat.push(act);
+        if(P.integ<=0){result='lose';break;}
+        if(alive(Es).length===0){result='win';break;}
+      }
+      if(result) break;
+    }
+    // cooldown tick
+    for(const u of all()) for(const k in u.cds) if(u.cds[k]>0) u.cds[k]--;
+    if(result) break;
+  }
+  if(!result) result=(alive(Es).length===0)?'win':'lose';
+  return {units:units0, flat, result, playerIntegrityAfter:Math.max(0,P.integ)};
+}
+function prio(a){return a.type==='buff'?0:a.type==='heal'?1:a.type==='defense'?2:3;}
+function applyAbility(u,A,foes,rng,round,mult){
+  const v=(1+(rng()*2-1)*VAR);
+  const act={round,actorId:u.id,actorName:u.name,actorSide:u.side,abilityName:A.name,type:A.type,targets:[],actorIntegAfter:u.integ};
+  if(A.type==='attack'){
+    const power=A.power*(mult||1);
+    const base=(power + u.firepower*FP_SCALE);
+    const tgts = A.targeting==='multi'? foes.slice() : [chooseTarget(A.condition,foes)];
+    for(const t of tgts){
+      let dmg=base*(A.targeting==='multi'?MULTI_MULT:1)*v;
+      dmg=dmg*(1-Math.min(ARMOR_CAP,t.armor/ARMOR_DIV));
+      let blocked=false, dealt;
+      if(t.guard>0){const absorb=Math.min(t.guard,dmg);t.guard-=absorb;dmg-=absorb;if(dmg<=0.5){blocked=true;dealt=0;}}
+      dealt = blocked?0:Math.max(CHIP,Math.round(dmg));
+      t.integ=Math.max(0,t.integ-dealt);
+      act.targets.push({id:t.id,name:t.name,value:dealt,integAfter:t.integ,blocked});
+    }
+  } else if(A.type==='heal'){
+    const amt=Math.round(A.power); u.integ=Math.min(u.maxInteg,u.integ+amt);
+    act.value=amt; act.kind='heal'; act.actorIntegAfter=u.integ;
+    act.targets.push({id:u.id,name:u.name,value:amt,integAfter:u.integ,heal:true});
+  } else if(A.type==='defense'){
+    u.guard+=Math.round(A.power); act.value=Math.round(A.power); act.kind='guard';
+  } else if(A.type==='buff'){
+    u.firepower+=Math.round(A.power); act.value=Math.round(A.power); act.kind='buff';
+  }
+  return act;
+}
+
+/* ============================================================
+   STATE
+   ============================================================ */
+const DEFAULT_LOADOUT={head:'hawkeye',core:'runner',rarm:'vulcan',larm:'shieldarm',backpack:'misspod',legs:'sprint'};
+const state={ loadout:Object.assign({},DEFAULT_LOADOUT), tactics:{}, selSlot:'rarm', run:null };
+const $=s=>document.querySelector(s);
+const el=(t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e;};
+
+/* ---------- GARAGE ---------- */
+function renderFrame(){
+  const f=$('#frame');f.innerHTML='';
+  const cls={head:'fr-head',backpack:'fr-bp',rarm:'fr-rarm',core:'fr-core',larm:'fr-larm',legs:'fr-legs'};
+  for(const slot of SLOTS){
+    const id=state.loadout[slot];const p=id?PART[id]:null;
+    const b=el('div','slotbtn '+cls[slot]+(slot===state.selSlot?' sel':''));
+    b.innerHTML=`<span class="sl">${SLOT_LABEL[slot]}</span>
+      <span class="eq ${p?'':'empty'}">${p?p.name.split(' ')[0]:'— empty'}</span>
+      ${p&&p.ability?`<span class="ab">◈ ${p.ability.name}</span>`:''}`;
+    b.onclick=()=>{state.selSlot=slot;renderFrame();renderParts();};
+    f.appendChild(b);
+  }
+}
+function chips(st){
+  const short={integrity:'INT',firepower:'FP',armor:'ARM',speed:'SPD',charge:'CHG'};
+  return Object.keys(short).filter(k=>st[k]).map(k=>{const v=st[k];
+    const val=(k==='charge')?(v>0?'+':'')+v.toFixed(1):(v>0?'+':'')+v;
+    return `<span class="chip ${v>0?'pos':'neg'}">${short[k]} ${val}</span>`;}).join('');
+}
+function renderParts(){
+  const box=$('#partList');box.innerHTML='';const slot=state.selSlot;
+  $('#partsHead').textContent=SLOT_LABEL[slot]+' — parts';
+  const un=el('div','part'+(state.loadout[slot]?'':' equipped'));
+  un.innerHTML=`<div class="pn" style="color:var(--dim)">— Empty slot</div><div class="abil ai">No part.</div>`;
+  un.onmouseenter=()=>preview(slot,null);un.onmouseleave=clearPrev;
+  un.onclick=()=>{state.loadout[slot]=null;delete state.tactics[slot];equipDone();};
+  box.appendChild(un);
+  for(const p of partsForSlot(slot)){
+    const eq=state.loadout[slot]===p.id;const card=el('div','part'+(eq?' equipped':''));
+    const cross=p.slot!==slot?`<span class="cross">↔ ${SLOT_LABEL[p.slot]}</span>`:
+      (p.alsoFits?`<span class="cross">↔ ${p.alsoFits.map(s=>SLOT_LABEL[s]).join('/')}</span>`:'');
+    card.innerHTML=`<span class="arch">${p.arch}</span>${cross}<div class="pn">${p.name}</div>
+      ${p.ability?`<div class="abil">◈ ${p.ability.name} <span class="ai">· ${p.ability.type}${p.ability.type==='attack'?' · pow '+p.ability.power:''}${p.ability.targeting==='multi'?' · multi':''}${p.ability.cooldown?' · cd'+p.ability.cooldown:''}</span></div>`:`<div class="abil ai">Passive — flat stats only</div>`}
+      <div class="chips">${chips(p.stats)}</div>`;
+    card.onmouseenter=()=>preview(slot,p.id);card.onmouseleave=clearPrev;
+    card.onclick=()=>{state.loadout[slot]=p.id;delete state.tactics[slot];equipDone();};
+    box.appendChild(card);
+  }
+}
+function equipDone(){renderFrame();renderParts();renderStats();renderTactics();validate();}
+function preview(slot,id){const pv=Object.assign({},state.loadout);pv[slot]=id;renderStats(pv);}
+function clearPrev(){renderStats();}
+function renderStats(previewLo){
+  const cur=derive(state.loadout,state.tactics);
+  const shown=previewLo?derive(previewLo,state.tactics):cur;
+  const box=$('#statPanel');box.innerHTML='';
+  for(const m of STAT_META){
+    const now=cur[m.k],nv=shown[m.k];const pct=Math.min(100,nv/m.max*100);
+    const up=previewLo&&nv>now,down=previewLo&&nv<now;
+    const fmt=v=>m.k==='charge'?v.toFixed(1):Math.round(v);
+    let dh='';if(previewLo&&nv!==now){const dv=nv-now;dh=`<span class="delta ${dv>0?'pos':'neg'}">${m.k==='charge'?(dv>0?'+':'')+dv.toFixed(1):(dv>0?'+':'')+Math.round(dv)}</span>`;}
+    const row=el('div','stat');
+    row.innerHTML=`<span class="lbl">${m.label}</span>
+      <span class="track"><span class="fill ${up?'up':''}" style="width:${pct}%;${down?'background:linear-gradient(90deg,#7a2b2b,var(--red))':''}"></span>
+      ${previewLo&&nv!==now?`<span class="ghost" style="left:${Math.min(100,now/m.max*100)}%"></span>`:''}</span>
+      <span class="val">${fmt(nv)}${dh}</span>`;
+    box.appendChild(row);
+  }
+}
+function renderTactics(){
+  const box=$('#tacticsList');box.innerHTML='';
+  const d=derive(state.loadout,state.tactics);
+  if(d.abilities.length===0){box.innerHTML='<div class="tac-empty">No active abilities equipped — this mech only has passive stat parts.</div>';return;}
+  for(const a of d.abilities){
+    const row=el('div','tacrow');
+    const opts=Object.keys(CONDITIONS).map(c=>`<option value="${c}"${c===a.condition?' selected':''}>${CONDITIONS[c].label}</option>`).join('');
+    row.innerHTML=`<span class="an"><span class="tag">${a.type}</span>${a.name} <span class="slotname">· ${SLOT_LABEL[a.slot]}</span></span>
+      <select data-slot="${a.slot}">${opts}</select>`;
+    row.querySelector('select').onchange=(e)=>{state.tactics[a.slot]=e.target.value;renderTactics();};
+    box.appendChild(row);
+  }
+}
+function validate(){
+  const d=derive(state.loadout,state.tactics);
+  const hasAtk=d.abilities.some(a=>a.type==='attack');
+  $('#garageWarn').textContent=hasAtk?'':'⚠ No attack ability — equip a weapon in R-Arm, L-Arm, or Backpack.';
+  $('#toDeploy').disabled=!hasAtk;return hasAtk;
+}
+$('#toDeploy').onclick=()=>{if(validate())show('mission');};
+$('#resetBtn').onclick=()=>{state.loadout=Object.assign({},DEFAULT_LOADOUT);state.tactics={};equipDone();};
+$('#randomBtn').onclick=()=>{
+  for(const slot of SLOTS){const o=partsForSlot(slot);state.loadout[slot]=o[Math.floor(Math.random()*o.length)].id;}
+  state.tactics={};
+  if(!derive(state.loadout,state.tactics).abilities.some(a=>a.type==='attack'))state.loadout.rarm='vulcan';
+  equipDone();
+};
+
+/* ---------- MISSION SELECT ---------- */
+function renderMissions(){
+  const box=$('#missionCards');box.innerHTML='';
+  MISSIONS.forEach((m,i)=>{
+    const c=el('div','mcard');
+    const pips=[1,2,3].map(n=>`<span class="pip ${n<=m.diff?'on':''}"></span>`).join('');
+    c.innerHTML=`<div class="mno">DEPLOYMENT ${String(i+1).padStart(2,'0')}</div><div class="mt">${m.name}</div>
+      <div class="md">${m.desc}</div><div class="enc">▷ ${m.encounters.map(e=>e.name).join('  →  ')}</div><div class="diff">${pips}</div>`;
+    c.onclick=()=>startRun(i);box.appendChild(c);
+  });
+}
+$('#backToGarage').onclick=()=>show('garage');
+
+/* ---------- LANE RUN ---------- */
+function startRun(missionIdx){
+  const m=MISSIONS[missionIdx];const d=derive(state.loadout,state.tactics);
+  state.run={mission:m,missionIdx,idx:0,
+    mech:{name:'ROOK-7',integ:d.maxInteg,maxInteg:d.maxInteg,firepower:d.firepower,armor:d.armor,speed:d.speed,abilities:d.abilities,charge:d.charge},
+    lightning:22,lightningSpent:0,prebuff:null,fights:0};
+  show('lane');renderLane();
+}
+function renderLane(){
+  const r=state.run,m=r.mission;
+  $('#laneName').textContent='▷ '+m.name;
+  const track=$('#laneTrack');track.innerHTML='';
+  m.encounters.forEach((e,i)=>{
+    if(i)track.appendChild(el('span','arrow','→'));
+    const n=el('div','node '+(i<r.idx?'done':i===r.idx?'cur':''));
+    n.innerHTML=`<div class="nk">${i<r.idx?'✓ cleared':i===r.idx?'▶ next':'upcoming'}</div>
+      <div class="nn">${e.name}</div><div class="nthreat">${e.threat}</div>`;
+    track.appendChild(n);
+  });
+  const ip=r.mech.integ/r.mech.maxInteg*100;
+  $('#integFill').style.width=ip+'%';
+  $('#integTxt').textContent=Math.round(r.mech.integ)+' / '+r.mech.maxInteg;
+  $('#lightFill').style.width=Math.min(100,r.lightning)+'%';
+  $('#lightTxt').textContent=Math.round(r.lightning)+' / 100';
+  $('#repairBtn').disabled=r.lightning<30||r.mech.integ>=r.mech.maxInteg;
+  $('#prebuffBtn').disabled=r.lightning<25||!!r.prebuff;
+  $('#engageBtn').textContent='Engage: '+m.encounters[r.idx].name+' ▷';
+  $('#laneHint').textContent=r.idx===0?'Deploying fresh. Advance when ready.':'Wounds carried from the last fight. Repair now, or push on and bank Lightning for the boss.';
+  renderPrebuffPanel();
+}
+let prebuffOpen=false;
+function renderPrebuffPanel(){
+  const p=$('#prebuffPanel');p.innerHTML='';const r=state.run;
+  if(r.prebuff){p.innerHTML=`<div class="prebuffnote">◈ Pre-loaded: <b>${r.prebuff.name}</b> — +50% power &amp; fires round 1 next fight.</div>`;return;}
+  if(!prebuffOpen)return;
+  const atks=r.mech.abilities.filter(a=>a.type==='attack');
+  const box=el('div','prebuffpick');box.innerHTML='<div style="font-size:10px;color:var(--dim);letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px">Pick an attack to spike</div>';
+  atks.forEach(a=>{const b=el('button','pb',`◈ ${a.name} <span style="color:var(--dim)">· ${SLOT_LABEL[a.slot]} · pow ${a.power}</span>`);
+    b.onclick=()=>{r.lightning-=25;r.lightningSpent+=25;r.prebuff={key:a.key,name:a.name,mult:1.5};prebuffOpen=false;renderLane();};
+    box.appendChild(b);});
+  p.appendChild(box);
+}
+$('#repairBtn').onclick=()=>{const r=state.run;r.lightning-=30;r.lightningSpent+=30;
+  r.mech.integ=Math.min(r.mech.maxInteg,r.mech.integ+r.mech.maxInteg*0.35);renderLane();};
+$('#prebuffBtn').onclick=()=>{prebuffOpen=!prebuffOpen;renderPrebuffPanel();};
+$('#engageBtn').onclick=()=>engage();
+$('#laneAbort').onclick=()=>{state.run=null;show('garage');};
+
+/* ---------- SKIRMISH ---------- */
+let cutscene=null;
+function engage(){
+  const r=state.run;const enc=r.mission.encounters[r.idx];
+  const enemies=enc.enemies.map(id=>enemyProto(EN[id]));
+  const seed=(r.missionIdx+1)*10007 + r.idx*331 + 17;
+  const log=resolveSkirmish(r.mech,enemies,seed,r.prebuff);
+  r.prebuff=null; // consumed
+  playCutscene(log,enc);
+}
+function unitTypeLabel(t){return ({mech:'Mech',trap:'Trap',tank:'Tank',sniper:'Sniper',swarm:'Bot',boss:'Boss'})[t]||'Unit';}
+function playCutscene(log,enc){
+  show('skirmish');
+  $('#skName').textContent='▷ '+enc.name;
+  $('#skEnd').innerHTML='';$('#skContinue').style.display='none';$('#skSkip').style.display='';
+  const disp={}; // id -> {integ,maxInteg,dead}
+  const refs={};
+  const sideP=$('#sidePlayer'),sideE=$('#sideEnemy');sideP.innerHTML='';sideE.innerHTML='';
+  for(const u of log.units){
+    disp[u.id]={integ:u.startInteg,max:u.maxInteg};
+    const card=el('div','ucard '+(u.side==='player'?'player':'enemy'));
+    card.innerHTML=`<div class="un">${u.name}<span class="uhp" data-hp="${u.id}">${Math.round(u.startInteg)}</span></div>
+      <div class="utype">${unitTypeLabel(u.type)} · ARM ${u.armor} · SPD ${u.speed}</div>
+      <div class="ubar"><div class="ubarfill" data-bar="${u.id}" style="width:${u.startInteg/u.maxInteg*100}%"></div></div>`;
+    (u.side==='player'?sideP:sideE).appendChild(card);
+    refs[u.id]=card;
+  }
+  const setBar=(id)=>{const d=disp[id];const bar=refs[id].querySelector(`[data-bar="${id}"]`);
+    bar.style.width=(d.integ/d.max*100)+'%';refs[id].querySelector(`[data-hp="${id}"]`).textContent=Math.round(d.integ);
+    refs[id].classList.toggle('dead',d.integ<=0);};
+  function floatNum(id,txt,color){const c=refs[id];const f=el('span','float',txt);f.style.color=color;c.appendChild(f);setTimeout(()=>f.remove(),1000);}
+
+  let i=0,timer=null;
+  function stepOne(a){
+    Object.values(refs).forEach(c=>c.classList.remove('acting'));
+    refs[a.actorId]&&refs[a.actorId].classList.add('acting');
+    let bt=`<span class="rd">R${a.round}</span>${a.actorName} ▸ ${a.abilityName}`;
+    $('#banner').innerHTML=bt;
+    if(a.type==='attack'){
+      for(const t of a.targets){disp[t.id].integ=t.integAfter;setBar(t.id);
+        floatNum(t.id,t.blocked?'BLOCK':'-'+t.value,t.blocked?'var(--violet)':'var(--red)');}
+    }else if(a.kind==='heal'){disp[a.actorId].integ=a.actorIntegAfter;setBar(a.actorId);floatNum(a.actorId,'+'+a.value,'var(--lime)');}
+    else if(a.kind==='guard'){floatNum(a.actorId,'GUARD ▲','var(--violet)');}
+    else if(a.kind==='buff'){floatNum(a.actorId,'FP +'+a.value,'var(--amber)');}
+  }
+  function finish(){
+    Object.values(refs).forEach(c=>c.classList.remove('acting'));
+    $('#banner').innerHTML='&nbsp;';
+    const win=log.result==='win';
+    $('#skEnd').innerHTML=`<div class="skirmend"><span class="st ${win?'win':'lose'}">${win?'SKIRMISH WON':'MECH DOWN'}</span></div>`;
+    $('#skSkip').style.display='none';$('#skContinue').style.display='';
+  }
+  function play(){timer=setInterval(()=>{
+    if(i>=log.flat.length){clearInterval(timer);finish();return;}
+    stepOne(log.flat[i]);i++;
+  },780);}
+  $('#skSkip').onclick=()=>{if(timer)clearInterval(timer);
+    // apply all remaining instantly
+    for(;i<log.flat.length;i++){const a=log.flat[i];
+      if(a.type==='attack')for(const t of a.targets){disp[t.id].integ=t.integAfter;}
+      else if(a.kind==='heal')disp[a.actorId].integ=a.actorIntegAfter;}
+    for(const id in disp)setBar(id);finish();};
+  $('#skContinue').onclick=()=>onSkirmishResolved(log);
+  $('#skRounds').textContent=log.result==='win'?'':'';
+  cutscene={log};play();
+}
+function onSkirmishResolved(log){
+  const r=state.run;r.fights++;
+  r.mech.integ=log.playerIntegrityAfter;
+  if(log.result==='lose'||r.mech.integ<=0){return finishRun(false);}
+  r.idx++; r.lightning=Math.min(100,r.lightning+40);
+  if(r.idx>=r.mission.encounters.length){return finishRun(true);}
+  r.lightning=Math.min(100,r.lightning+Math.round(r.mech.charge*4));
+  show('lane');renderLane();
+}
+function finishRun(win){
+  const r=state.run;
+  $('#rTitle').textContent=win?'RUN CLEARED':'RUN LOST';
+  $('#rTitle').className='rtitle '+(win?'win':'lose');
+  $('#rSub').textContent=(win?'lane secured — ':'wreckage recovered — ')+r.mission.name;
+  $('#rFights').textContent=r.fights;
+  $('#rInteg').textContent=Math.round(r.mech.integ/r.mech.maxInteg*100)+'%';
+  $('#rLight').textContent=r.lightningSpent;
+  $('#rHint').textContent=win
+    ?'Try a leaner build (fewer abilities, higher stats) for a tougher-but-simpler run, or spend Lightning differently.'
+    :'Tip: set your heaviest attack to "Target: deadliest" to kill snipers first, and Repair between fights to survive attrition.';
+  show('result');
+}
+$('#rRetry').onclick=()=>startRun(state.run.missionIdx);
+$('#rGarage').onclick=()=>show('garage');
+
+/* ---------- ROUTER ---------- */
+function show(name){
+  for(const s of document.querySelectorAll('.screen'))s.classList.toggle('active',s.id===name);
+  if(cutscene&&name!=='skirmish')cutscene=null;
+  if(name==='garage'){renderFrame();renderParts();renderStats();renderTactics();validate();}
+  if(name==='mission')renderMissions();
+  window.scrollTo({top:0});
+}
+/* boot */
+equipDone();
+</script>

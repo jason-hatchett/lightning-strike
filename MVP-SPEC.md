@@ -254,20 +254,38 @@ Each phase is independently demoable with a hard exit criterion.
 - Content: Missions 3–4 (two-lane, then a terrain-gated three-lane).
 - **Exit:** lane assignment is a real decision — terrain forces build/coverage choices; support builds feel distinct from bruisers.
 
-### Phase 5 — First boss
+### Phase 5 — Visual identity: see your mechs (NEW)
+The sim and `SkirmishLog` are untouched — this is **pure playback + presentation** (§3). A **part-driven renderer** draws each mech from its loadout so you can *read* a build at a glance; combat becomes something you watch mechs *do*, not just bars and numbers. First-pass **neon vector silhouettes** matching the current UI — deeper art & free-form player customization are Phase 9.
+- **Part-driven mech renderer** — compose a mech image from its parts: a core/body, two arms rendered by weapon archetype (**gun** for kinetic/explosive, **sword/blade** for energy melee, **shield** for shield parts), a backpack, and **legs that read the mobility tag** (bipedal / treads / hover / dive / thruster-jump). A small **mobility badge** reinforces it.
+- **Garage live preview** — the mech you're building is drawn and updates as you swap parts (alongside the existing stat-delta preview).
+- **Color schemes (per mech)** — pick one of **5 preset schemes** per mech in the garage, each a **base + secondary + trim** triad (base = core/body plating; secondary = arms / legs / backpack; trim = weapon glow, accents & mobility badge). Proposed set: **Vanguard** (steel-navy / cyan / amber), **Ember** (gunmetal / orange / red), **Venom** (dark-green / lime / cyan), **Sovereign** (indigo / violet / magenta), **Warhound** (charcoal / magenta / white). **Enemies are recolored to a fixed hostile palette** (rust / red-magenta / amber) so friend-vs-foe reads instantly whatever schemes the player picks.
+- **Combat visualization (Canvas 2D)** — the cutscene replays the `SkirmishLog` as posed mechs: an actor emotes/lunges and shows a muzzle-flash / slash / guard when it acts, the struck **part flashes and visibly breaks** when disabled. Still **skippable to the final frame**, still deterministic (visual only), still respects `prefers-reduced-motion`.
+- **Airship home view** — a visual of your airship on the hangar/home screen (static illustration for now; it becomes navigable in Phase 7).
+- **Minimum bar (must-have):** from a mech's appearance alone you can tell its **weapon (gun / sword / shield)** and its **mobility tag**.
+- **Exit:** you can see the mech you built in the garage, watch mechs take actions in combat, and identify any mech's weapon + mobility at a glance; the `SkirmishLog` contract and determinism are unchanged.
+
+### Phase 6 — First boss
 - Single boss mech with subsystems mapped to slot vocabulary; convergent lanes; all mechs assist.
 - One long cutscene; focus-fire via targeting conditions.
 - **Exit:** beatable by coordinated tactics, unfair by brute force.
 
-### Phase 6 — Run structure & economy
-- Node-map overworld, airship travel; currency + scrap; one shop; field repair/build from scrap.
+### Phase 7 — Run structure & economy
+- Node-map overworld, **airship travel** (the airship shown on the home screen in Phase 5 becomes navigable — you pilot it across the node map); currency + scrap; one shop; field repair/build from scrap.
 - Expendable pilots: lost mechs gone for the run. Run ends on victory node or last-mech loss.
 - **Exit:** a full short run (5–8 nodes) plays start to finish and poses salvage-vs-payout + attrition questions.
 
-### Phase 7 — Ship meta-progression
+### Phase 8 — Ship meta-progression
 - Persistent airship: unlock part/ability categories, upgrade garage / Lightning baseline / salvage / starting kit.
 - Failure screen with run stats (leaderboard-shaped, local).
 - **Exit:** losing a run feels like fuel — you immediately re-spend meta-currency and relaunch.
+
+### Phase 9 — Visual customization & juice (NEW, later polish)
+Deepens Phase 5's placeholder visuals once the game loop is complete.
+- **Player customization** — beyond the 5 preset schemes, free base/secondary/trim color pickers, decals/emblems, optional part-skin variants — make a mech *look* yours.
+- **Richer art & animation** — higher-fidelity silhouettes/sprites, smoother action animation, weapon-specific VFX (tracer, beam, sparks), destruction/wreck states.
+- **Juice pass** — screen shake, hit-stop, impact flashes, sound hooks — tuned to stay satisfying to *watch* and frictionless to *skip*.
+- **Airship & garage polish** — the airship and hangar get the same finish.
+- **Exit:** the game reads as *styled*, not schematic; players can make a mech visually their own; the skip path stays instant.
 
 *(Post-MVP: ability rarity/combos, weekly seeds + real leaderboard, endless mode, faction variety, pilot traits, deeper tactics.)*
 

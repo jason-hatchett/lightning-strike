@@ -1,0 +1,120 @@
+{
+  "parts": [
+    {
+      "slot": "head",
+      "id": "hawkeye"
+    },
+    {
+      "slot": "head",
+      "id": "iris"
+    },
+    {
+      "slot": "head",
+      "id": "owl"
+    },
+    {
+      "slot": "core",
+      "id": "bastion"
+    },
+    {
+      "slot": "core",
+      "id": "runner"
+    },
+    {
+      "slot": "core",
+      "id": "reactor"
+    },
+    {
+      "slot": "rarm",
+      "id": "vulcan"
+    },
+    {
+      "slot": "rarm",
+      "id": "plasma"
+    },
+    {
+      "slot": "rarm",
+      "id": "gatling"
+    },
+    {
+      "slot": "larm",
+      "id": "saber"
+    },
+    {
+      "slot": "larm",
+      "id": "shieldarm"
+    },
+    {
+      "slot": "larm",
+      "id": "missarm"
+    },
+    {
+      "slot": "backpack",
+      "id": "misspod"
+    },
+    {
+      "slot": "backpack",
+      "id": "shpack"
+    },
+    {
+      "slot": "backpack",
+      "id": "repairpod"
+    },
+    {
+      "slot": "backpack",
+      "id": "fieldkit"
+    },
+    {
+      "slot": "backpack",
+      "id": "drone"
+    },
+    {
+      "slot": "backpack",
+      "id": "thrust"
+    },
+    {
+      "slot": "backpack",
+      "id": "jumpjet"
+    },
+    {
+      "slot": "legs",
+      "id": "sprint"
+    },
+    {
+      "slot": "legs",
+      "id": "tread"
+    },
+    {
+      "slot": "legs",
+      "id": "spider"
+    },
+    {
+      "slot": "legs",
+      "id": "hover"
+    },
+    {
+      "slot": "legs",
+      "id": "dive"
+    }
+  ],
+  "enemiesMono": [
+    "bot",
+    "tank",
+    "turret"
+  ],
+  "frame": 64,
+  "palette": {
+    "base_sh": "#0e1526",
+    "base_mid": "#16233f",
+    "base_lt": "#243a63",
+    "sec_sh": "#0c6f82",
+    "sec_mid": "#17aecb",
+    "sec_lt": "#22e0ff",
+    "trim_mid": "#c79a1f",
+    "trim_lt": "#ffd23e",
+    "glow": "#ffffff",
+    "outline": "#05070d",
+    "metal_dk": "#3a4763",
+    "metal_lt": "#8f9fc0"
+  }
+}

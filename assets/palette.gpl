@@ -1,0 +1,16 @@
+GIMP Palette
+Name: LightningStrike-Master
+Columns: 4
+#
+  5   7  13	outline
+ 14  21  38	base_sh
+ 22  35  63	base_mid
+ 36  58  99	base_lt
+ 12 111 130	sec_sh
+ 23 174 203	sec_mid
+ 34 224 255	sec_lt
+199 154  31	trim_mid
+255 210  62	trim_lt
+255 255 255	glow
+ 58  71  99	metal_dk
+143 159 192	metal_lt

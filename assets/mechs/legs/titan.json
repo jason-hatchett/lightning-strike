@@ -1,0 +1,12 @@
+{
+"size": 64,
+"frames": 4,
+"tags": {
+"idle": 0,
+"act": 1,
+"hit": 2,
+"disabled": 3
+},
+"slot": "legs",
+"id": "titan"
+}

@@ -95,6 +95,34 @@
     {
       "slot": "legs",
       "id": "dive"
+    },
+    {
+      "slot": "head",
+      "id": "praetor"
+    },
+    {
+      "slot": "core",
+      "id": "aegis"
+    },
+    {
+      "slot": "rarm",
+      "id": "marksman"
+    },
+    {
+      "slot": "larm",
+      "id": "bulwark"
+    },
+    {
+      "slot": "legs",
+      "id": "titan"
+    },
+    {
+      "slot": "core",
+      "id": "scrap"
+    },
+    {
+      "slot": "rarm",
+      "id": "scrapgun"
     }
   ],
   "enemiesMono": [

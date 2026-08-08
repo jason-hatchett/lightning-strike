@@ -74,8 +74,10 @@ const PRESETS={
   "ROOK-7":{head:"iris",core:"bastion",rarm:"plasma",larm:"shieldarm",backpack:"shpack",legs:"tread"},
   "SWIFT-2":{head:"owl",core:"runner",rarm:"vulcan",larm:"saber",backpack:"thrust",legs:"sprint"},
   "OTTER-9":{head:"hawkeye",core:"reactor",rarm:"gatling",larm:"missarm",backpack:"fieldkit",legs:"dive"},
+  "PRAETOR-1":{head:"praetor",core:"aegis",rarm:"marksman",larm:"bulwark",legs:"titan"},
+  "SCRAP-0":{head:"hawkeye",core:"scrap",rarm:"scrapgun",larm:"missarm",backpack:"fieldkit",legs:"tread"},
 };
-const KIT={"ROOK-7":"tread · plasma·shield","SWIFT-2":"fly · gun·sword","OTTER-9":"swim · gun·missile"};
+const KIT={"ROOK-7":"tread · plasma·shield","SWIFT-2":"fly · gun·sword","OTTER-9":"swim · gun·missile","PRAETOR-1":"biped · rifle·shield","SCRAP-0":"salvage · scrap-gun"};
 // schemes: base[sh,mid,lt], sec[sh,mid,lt], trim[mid,lt]  (docs/art-spec.md §5)
 const SCHEMES={
   Vanguard:{base:["#0e1526","#16233f","#243a63"],sec:["#0c6f82","#17aecb","#22e0ff"],trim:["#c79a1f","#ffd23e"]},
@@ -83,6 +85,14 @@ const SCHEMES={
   Venom:{base:["#0a1a12","#10261a","#1c4230"],sec:["#2f7d2a","#58c23a","#7dff6b"],trim:["#0c7f96","#22e0ff"]},
   Sovereign:{base:["#141026","#1e1636","#322a5c"],sec:["#5a3a8a","#8a5fc8","#b98cff"],trim:["#b5236a","#ff2e88"]},
   Warhound:{base:["#141014","#241820","#3a2a34"],sec:["#8a1f3a","#d2244f","#ff3b6b"],trim:["#c9c9d6","#ffffff"]},
+  // --- ROYGBIV primaries: body = the hue, contrasting visor/accent + bright energy trim ---
+  Scarlet:{base:["#3a0e10","#7a1c22","#b83038"],sec:["#0c6f82","#17aecb","#22e0ff"],trim:["#ffcf3e","#ffe98f"]},
+  Solar:{base:["#3a1e08","#7a3e12","#c66a1e"],sec:["#123a6e","#2a6ec2","#4aa8ff"],trim:["#ffd23e","#fff0a0"]},
+  Amber:{base:["#3a2e08","#786218","#c9a52a"],sec:["#123a6e","#2a6ec2","#4aa8ff"],trim:["#ff6a2e","#ffb46b"]},
+  Verdant:{base:["#0e2a14","#1a5226","#2c8c3e"],sec:["#7a5a12","#c9a52a","#ffe066"],trim:["#ff3b6b","#ff85a8"]},
+  Azure:{base:["#0e1a3a","#1a2f70","#2c4ec8"],sec:["#0c6f82","#17aecb","#22e0ff"],trim:["#ffd23e","#fff0a0"]},
+  Indigo:{base:["#14123a","#221e6e","#3a34b4"],sec:["#5a3a8a","#8a5fc8","#b98cff"],trim:["#22e0ff","#a8f4ff"]},
+  Amethyst:{base:["#2a0e3a","#521c74","#8230b8"],sec:["#8a1f5a","#d2246e","#ff3b9b"],trim:["#ffd23e","#fff0a0"]},
   Enemy:{base:["#160a10","#2a1420","#48212f"],sec:["#8a1f2a","#d22436","#ff3b4b"],trim:["#c98a1f","#ffb43e"]},
 };
 const MASTER={ // source colors in the sheets (docs/art-spec.md §5)
@@ -134,7 +144,7 @@ function mkCanvas(scale){const c=document.createElement("canvas");c.width=FRAME*
   c.getContext("2d").imageSmoothingEnabled=false;return c;}
 
 // ---- state ----
-const combat=[{name:"SWIFT-2",scheme:"Vanguard",tag:"idle"},{name:"OTTER-9",scheme:"Enemy",tag:"idle",enemy:true}];
+const combat=[{name:"PRAETOR-1",scheme:"Vanguard",tag:"idle"},{name:"SCRAP-0",scheme:"Enemy",tag:"idle",enemy:true}];
 let sparTimer=null;
 
 function build(){
@@ -147,7 +157,7 @@ function build(){
     card.appendChild(nm);card.appendChild(mk);cbox.appendChild(card);});
   // hangar with per-mech scheme picker
   const hbox=document.getElementById("hangar");hbox.innerHTML="";
-  const hangarSchemes={"ROOK-7":"Vanguard","SWIFT-2":"Venom","OTTER-9":"Ember"};
+  const hangarSchemes={"ROOK-7":"Vanguard","SWIFT-2":"Venom","OTTER-9":"Ember","PRAETOR-1":"Ember","SCRAP-0":"Enemy"};
   Object.keys(PRESETS).forEach(name=>{const card=document.createElement("div");card.className="mech";
     const cv=mkCanvas(4);card.appendChild(cv);
     const nm=document.createElement("div");nm.className="mn";nm.textContent=name;
@@ -160,7 +170,7 @@ function build(){
   // swatches: SWIFT across all schemes
   const sbox=document.getElementById("swatches");sbox.innerHTML="";
   Object.keys(SCHEMES).forEach(s=>{const w=document.createElement("div");w.className="swatch";
-    const cv=mkCanvas(3);composeMech(cv.getContext("2d"),PRESETS["SWIFT-2"],s,"idle",3);
+    const cv=mkCanvas(3);composeMech(cv.getContext("2d"),PRESETS["PRAETOR-1"],s,"idle",3);
     const sl=document.createElement("div");sl.className="sl";sl.textContent=s;
     w.appendChild(cv);w.appendChild(sl);sbox.appendChild(w);});
   renderCombat();

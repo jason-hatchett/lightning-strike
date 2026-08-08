@@ -1,0 +1,178 @@
+<title>Lightning Strike — Sprite Sandbox</title>
+<style>
+  :root{--bg:#070a12;--panel:#111a2e;--panel2:#0e1526;--line:#22314f;--line2:#2f4570;
+    --ink:#cdd8f2;--dim:#7286ad;--cyan:#22e0ff;--amber:#ffd23e;--mag:#ff3b6b;--lime:#7dff6b;
+    --mono:ui-monospace,"Cascadia Mono",Menlo,Consolas,monospace;}
+  *{box-sizing:border-box} html,body{margin:0}
+  body{background:radial-gradient(1100px 600px at 50% -10%,#14203a,transparent 60%),var(--bg);
+    color:var(--ink);font-family:var(--mono);font-size:14px;line-height:1.5}
+  body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:99;
+    background:repeating-linear-gradient(0deg,rgba(0,0,0,.16) 0 1px,transparent 1px 3px);mix-blend-mode:multiply;opacity:.4}
+  .wrap{max-width:1040px;margin:0 auto;padding:24px 18px 70px}
+  h1{font-size:22px;letter-spacing:.13em;margin:0;color:var(--amber);text-shadow:0 0 16px rgba(255,210,62,.5)}
+  h1 .b{color:var(--cyan)} .sub{color:var(--dim);margin:6px 0 0;max-width:78ch}
+  .drop{margin:18px 0;border:2px dashed var(--line2);border-radius:10px;padding:26px;text-align:center;color:var(--dim);transition:.15s;cursor:pointer}
+  .drop.hot{border-color:var(--cyan);color:var(--cyan);background:rgba(34,224,255,.06)}
+  .controls{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin:8px 0 4px;font-size:12px}
+  .btn{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;
+    padding:7px 12px;border-radius:4px;cursor:pointer;border:1px solid var(--line2);background:var(--panel2);color:var(--ink)}
+  .btn:hover{border-color:var(--cyan);color:var(--cyan)}
+  label.ck{color:var(--dim);cursor:pointer;user-select:none}
+  .cards{display:flex;flex-direction:column;gap:16px;margin-top:16px}
+  .card{border:1px solid var(--line);border-radius:8px;background:linear-gradient(180deg,var(--panel),var(--panel2));padding:14px;display:grid;grid-template-columns:auto 1fr;gap:18px}
+  @media(max-width:720px){.card{grid-template-columns:1fr}}
+  .big{position:relative;width:224px}
+  .big canvas{image-rendering:pixelated;width:224px;height:auto;display:block;background:
+    radial-gradient(120px 60px at 50% 60%,rgba(34,224,255,.07),transparent 70%),#060911;border:1px solid var(--line);border-radius:4px}
+  .big .ov{position:absolute;inset:0;pointer-events:none}
+  .fname{font-size:11px;color:var(--ink);margin-top:6px;word-break:break-all}
+  .meta{font-size:11px;color:var(--dim);margin-top:4px}
+  .lint{font-size:11px;margin-top:8px;padding:7px 9px;border-radius:4px;border:1px solid var(--line)}
+  .lint.ok{color:var(--lime);border-color:rgba(125,255,107,.35)}
+  .lint.bad{color:var(--amber);border-color:rgba(255,210,62,.35)}
+  .lint .cols{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px}
+  .lint .cols i{width:12px;height:12px;border-radius:2px;border:1px solid #000;display:inline-block}
+  .schemes{display:flex;gap:12px;flex-wrap:wrap;align-content:flex-start}
+  .sw{text-align:center} .sw canvas{image-rendering:pixelated;width:96px;height:auto;background:#060911;border:1px solid var(--line);border-radius:4px}
+  .sw .sl{font-size:10px;color:var(--dim);margin-top:3px}
+  .foot{margin-top:30px;border-top:1px solid var(--line);padding-top:14px;color:var(--dim);font-size:11px;max-width:84ch}
+  code{color:var(--cyan)}
+</style>
+<script src="assets/sprites.js"></script>
+
+<div class="wrap">
+  <h1>⚡ SPRITE <span class="b">SANDBOX</span></h1>
+  <p class="sub">Drop in any candidate art — a single pose or a frame strip — to see it on the 64×64 frame with
+    anchor guides, recolored across all 5 schemes + the enemy ramp, and linted against the master palette (so you
+    know whether it'll recolor). Nothing is saved; this is just a viewer. To make art <i>live</i> in the game, see the note below.</p>
+
+  <div class="drop" id="drop">⬇ Drop image(s) here, or click to pick — PNGs from Aseprite/Midjourney/anywhere</div>
+  <div class="controls">
+    <input type="file" id="file" accept="image/*" multiple hidden>
+    <button class="btn" id="sample">Load a placeholder sample</button>
+    <label class="ck"><input type="checkbox" id="guide" checked> anchor guide</label>
+    <label class="ck"><input type="checkbox" id="frame0" checked> strips: show frame 0 only</label>
+    <button class="btn" id="clear">Clear</button>
+  </div>
+
+  <div class="cards" id="cards"></div>
+
+  <div class="foot">
+    <b style="color:var(--ink)">Where to put art so it renders in the game:</b><br>
+    • <b>Quick look / compare styles</b> → here (drag-drop, no files to place).<br>
+    • <b>Replace a real part</b> → save your PNG to <code>assets/mechs/&lt;slot&gt;/&lt;id&gt;.png</code>
+      (filename = part id, e.g. <code>assets/mechs/rarm/plasma.png</code>; horizontal strip of 64×64 frames, or one 64×64 image),
+      then run <code>python tools/bundle_sprites.py</code> and refresh <code>render-demo.html</code>.<br>
+    • ⚠ Don't re-run <code>gen_placeholders.py</code> after repainting — it overwrites art. Use <code>bundle_sprites.py</code>.<br>
+    • Paint on the master palette (<code>assets/palette.gpl</code>) for the recolor to work — this sandbox's lint tells you if you did.
+  </div>
+</div>
+
+<script>
+"use strict";
+const SCHEMES={
+  Vanguard:{base:["#0e1526","#16233f","#243a63"],sec:["#0c6f82","#17aecb","#22e0ff"],trim:["#c79a1f","#ffd23e"]},
+  Ember:{base:["#1a120c","#2a1c10","#45301a"],sec:["#8a3a12","#d2641e","#ff8a3e"],trim:["#b5311f","#ff5a3e"]},
+  Venom:{base:["#0a1a12","#10261a","#1c4230"],sec:["#2f7d2a","#58c23a","#7dff6b"],trim:["#0c7f96","#22e0ff"]},
+  Sovereign:{base:["#141026","#1e1636","#322a5c"],sec:["#5a3a8a","#8a5fc8","#b98cff"],trim:["#b5236a","#ff2e88"]},
+  Warhound:{base:["#141014","#241820","#3a2a34"],sec:["#8a1f3a","#d2244f","#ff3b6b"],trim:["#c9c9d6","#ffffff"]},
+  // --- ROYGBIV primaries: body = the hue, contrasting visor/accent + bright energy trim ---
+  Scarlet:{base:["#3a0e10","#7a1c22","#b83038"],sec:["#0c6f82","#17aecb","#22e0ff"],trim:["#ffcf3e","#ffe98f"]},
+  Solar:{base:["#3a1e08","#7a3e12","#c66a1e"],sec:["#123a6e","#2a6ec2","#4aa8ff"],trim:["#ffd23e","#fff0a0"]},
+  Amber:{base:["#3a2e08","#786218","#c9a52a"],sec:["#123a6e","#2a6ec2","#4aa8ff"],trim:["#ff6a2e","#ffb46b"]},
+  Verdant:{base:["#0e2a14","#1a5226","#2c8c3e"],sec:["#7a5a12","#c9a52a","#ffe066"],trim:["#ff3b6b","#ff85a8"]},
+  Azure:{base:["#0e1a3a","#1a2f70","#2c4ec8"],sec:["#0c6f82","#17aecb","#22e0ff"],trim:["#ffd23e","#fff0a0"]},
+  Indigo:{base:["#14123a","#221e6e","#3a34b4"],sec:["#5a3a8a","#8a5fc8","#b98cff"],trim:["#22e0ff","#a8f4ff"]},
+  Amethyst:{base:["#2a0e3a","#521c74","#8230b8"],sec:["#8a1f5a","#d2246e","#ff3b9b"],trim:["#ffd23e","#fff0a0"]},
+  Enemy:{base:["#160a10","#2a1420","#48212f"],sec:["#8a1f2a","#d22436","#ff3b4b"],trim:["#c98a1f","#ffb43e"]},
+};
+const MASTER={base:["#0e1526","#16233f","#243a63"],sec:["#0c6f82","#17aecb","#22e0ff"],
+  trim:["#c79a1f","#ffd23e"],glow:"#ffffff",fixed:["#05070d","#3a4763","#8f9fc0"]};
+const ANCHORS={head:[32,12],core:[32,30],rarm:[44,28],larm:[20,28],backpack:[32,20],legs:[32,46]};
+const BASELINE=62;
+const hx=h=>[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
+const key=(r,g,b)=>r<<16|g<<8|b;
+function lut(scheme){const s=SCHEMES[scheme],m=new Map();
+  MASTER.base.forEach((h,i)=>m.set(key(...hx(h)),hx(s.base[i])));
+  MASTER.sec.forEach((h,i)=>m.set(key(...hx(h)),hx(s.sec[i])));
+  MASTER.trim.forEach((h,i)=>m.set(key(...hx(h)),hx(s.trim[i])));
+  m.set(key(...hx(MASTER.glow)),hx(s.trim[1]));return m;}
+const MASTERSET=new Set([...MASTER.base,...MASTER.sec,...MASTER.trim,MASTER.glow,...MASTER.fixed].map(h=>key(...hx(h))));
+
+function recolor(srcCanvas,scheme){
+  const c=document.createElement("canvas");c.width=srcCanvas.width;c.height=srcCanvas.height;
+  const x=c.getContext("2d");x.imageSmoothingEnabled=false;x.drawImage(srcCanvas,0,0);
+  const L=lut(scheme),d=x.getImageData(0,0,c.width,c.height),p=d.data;
+  for(let i=0;i<p.length;i+=4){if(p[i+3]===0)continue;const rep=L.get(key(p[i],p[i+1],p[i+2]));if(rep){p[i]=rep[0];p[i+1]=rep[1];p[i+2]=rep[2];}}
+  x.putImageData(d,0,0);return c;}
+function frame0(img){ // if width is a multiple of height, treat as strip and take first frame
+  const h=img.height,w=img.width,frames=h?Math.round(w/h):1;
+  const c=document.createElement("canvas");
+  if(document.getElementById("frame0").checked && frames>1){c.width=h;c.height=h;}
+  else{c.width=w;c.height=h;}
+  const x=c.getContext("2d");x.imageSmoothingEnabled=false;x.drawImage(img,0,0);return {canvas:c,frames};}
+function lintPalette(canvas){
+  const x=canvas.getContext("2d"),d=x.getImageData(0,0,canvas.width,canvas.height).data;
+  let on=0,off=0;const offCols=new Map();
+  for(let i=0;i<d.length;i+=4){if(d[i+3]===0)continue;const k=key(d[i],d[i+1],d[i+2]);
+    if(MASTERSET.has(k))on++;else{off++;offCols.set(k,(offCols.get(k)||0)+1);}}
+  return {on,off,total:on+off,offColors:[...offCols.keys()]};}
+
+const cards=document.getElementById("cards");
+function addImage(name,img){
+  const f=frame0(img),base=f.canvas;
+  const card=document.createElement("div");card.className="card";
+  // big preview
+  const big=document.createElement("div");big.className="big";
+  const cv=document.createElement("canvas");cv.width=base.width;cv.height=base.height;
+  cv.getContext("2d").imageSmoothingEnabled=false;cv.getContext("2d").drawImage(base,0,0);
+  const ov=document.createElement("canvas");ov.className="ov";ov.width=base.width;ov.height=base.height;
+  ov.style.width="224px";ov.style.height=(224*base.height/base.width)+"px";
+  drawGuide(ov,base.width,base.height);
+  big.appendChild(cv);big.appendChild(ov);
+  const fn=document.createElement("div");fn.className="fname";fn.textContent=name;
+  const mt=document.createElement("div");mt.className="meta";mt.textContent=`${img.width}×${img.height}px · ${f.frames} frame${f.frames>1?"s":""} detected`;
+  big.appendChild(fn);big.appendChild(mt);
+  // lint
+  const L=lintPalette(base),pct=L.total?Math.round(L.on/L.total*100):0;
+  const lint=document.createElement("div");lint.className="lint "+(pct>=99?"ok":"bad");
+  lint.innerHTML=`master-palette: <b>${pct}%</b> on-palette · ${L.off} off-palette px, ${L.offColors.length} colors`
+    +(L.offColors.length?`<div class="cols">`+L.offColors.slice(0,16).map(k=>`<i style="background:rgb(${k>>16&255},${k>>8&255},${k&255})"></i>`).join("")+`</div>`:"")
+    +(pct>=99?"":`<div style="margin-top:4px">↳ off-palette pixels won't recolor — repaint on assets/palette.gpl to enable schemes.</div>`);
+  big.appendChild(lint);
+  // scheme strip
+  const strip=document.createElement("div");strip.className="schemes";
+  Object.keys(SCHEMES).forEach(s=>{const w=document.createElement("div");w.className="sw";
+    const rc=recolor(base,s);const sc=document.createElement("canvas");sc.width=rc.width;sc.height=rc.height;
+    sc.getContext("2d").imageSmoothingEnabled=false;sc.getContext("2d").drawImage(rc,0,0);
+    const sl=document.createElement("div");sl.className="sl";sl.textContent=s;
+    w.appendChild(sc);w.appendChild(sl);strip.appendChild(w);});
+  card.appendChild(big);card.appendChild(strip);cards.prepend(card);
+}
+function drawGuide(ov,w,h){
+  const x=ov.getContext("2d");x.clearRect(0,0,w,h);
+  if(!document.getElementById("guide").checked)return;
+  const sq=Math.abs(w-h)<=Math.max(w,h)*0.06 || (w%h===0); // looks sprite-like (square or strip)
+  if(!sq)return;
+  x.strokeStyle="rgba(255,210,62,.6)";x.lineWidth=0.5;x.beginPath();x.moveTo(0,BASELINE);x.lineTo(h,BASELINE);x.stroke();
+  x.fillStyle="rgba(34,224,255,.8)";
+  for(const k in ANCHORS){const[ax,ay]=ANCHORS[k];x.fillRect(ax-1,ay-1,2,2);}
+}
+
+function handleFiles(list){[...list].forEach(file=>{if(!file.type.startsWith("image/"))return;
+  const url=URL.createObjectURL(file);const img=new Image();
+  img.onload=()=>{addImage(file.name,img);URL.revokeObjectURL(url);};img.src=url;});}
+const drop=document.getElementById("drop"),fileIn=document.getElementById("file");
+drop.onclick=()=>fileIn.click();
+fileIn.onchange=e=>handleFiles(e.target.files);
+["dragenter","dragover"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add("hot");}));
+["dragleave","drop"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove("hot");}));
+drop.addEventListener("drop",e=>handleFiles(e.dataTransfer.files));
+document.body.addEventListener("dragover",e=>e.preventDefault());
+document.body.addEventListener("drop",e=>e.preventDefault());
+document.getElementById("clear").onclick=()=>cards.innerHTML="";
+document.getElementById("sample").onclick=()=>{
+  const S=window.SPRITES||{};const picks=["rarm/plasma","legs/tread","core/reactor"].filter(k=>S[k]);
+  picks.forEach(k=>{const img=new Image();img.onload=()=>addImage(k+".png (placeholder)",img);img.src=S[k].uri;});
+};
+</script>

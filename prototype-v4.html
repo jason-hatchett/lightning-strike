@@ -56,6 +56,13 @@
   .garage{display:grid;grid-template-columns:1fr 1.1fr;gap:16px}
   @media (max-width:840px){.garage{grid-template-columns:1fr}}
   .frame{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px}
+  .mechpreview{display:flex;flex-direction:column;align-items:center;gap:9px;margin-bottom:14px;padding:12px;
+    border:1px solid var(--line);border-radius:6px;background:radial-gradient(140px 80px at 50% 60%,rgba(34,224,255,.06),transparent 70%),var(--panel2)}
+  .mechpreview canvas{image-rendering:pixelated;border-radius:4px}
+  .schemepick{display:flex;align-items:center;gap:8px}
+  .schemepick .ml{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+  .schemepick select{background:var(--panel2);color:var(--ink);border:1px solid var(--line2);border-radius:3px;padding:3px 6px;font-size:11px;font-family:inherit}
+  .mtab canvas{image-rendering:pixelated;display:block;margin:6px auto 0;width:auto;height:auto;max-height:150px;max-width:100%}
   .slotbtn{border:1px solid var(--line);border-radius:5px;background:var(--panel2);padding:9px 8px;cursor:pointer;text-align:center;transition:.14s;min-height:64px;display:flex;flex-direction:column;justify-content:center}
   .slotbtn:hover{border-color:var(--line2)} .slotbtn.sel{border-color:var(--cyan);box-shadow:0 0 12px rgba(34,224,255,.22);background:rgba(34,224,255,.06)}
   .slotbtn .sl{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
@@ -192,6 +199,9 @@
   .ucard.player{border-color:var(--cyan-dim)} .ucard.dead{opacity:.32;filter:grayscale(.7)}
   .ucard.assist{border-color:var(--violet);border-style:dashed}
   .ucard.acting{border-color:var(--amber);box-shadow:0 0 18px rgba(255,210,62,.35);transform:translateY(-2px)}
+  .usprite{display:block;margin:0 auto 8px;image-rendering:pixelated;background:radial-gradient(60px 26px at 50% 78%,rgba(34,224,255,.09),transparent 70%)}
+  .usprite.flip{transform:scaleX(-1)}
+  .ucard.enemy .usprite{background:radial-gradient(60px 26px at 50% 78%,rgba(255,59,75,.10),transparent 70%)}
   .ucard .un{font-weight:700;font-size:13px;display:flex;justify-content:space-between;align-items:baseline}
   .ucard .utype{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
   .ucard .corebar{height:11px;border:1px solid var(--line);border-radius:2px;background:#0a1120;position:relative;overflow:hidden;margin-top:7px}
@@ -280,6 +290,7 @@
       <div class="panel">
         <input class="mnameedit" id="mechName" maxlength="14" spellcheck="false">
         <h2 class="head">Chassis · each part has its own HP · Core = its life</h2>
+        <div class="mechpreview" id="mechPreview"></div>
         <div class="frame" id="frame"></div>
         <div id="statPanel"></div>
         <div class="mobrow">
@@ -380,6 +391,7 @@
   </section>
 </div>
 
+<script src="assets/sprites.js"></script>
 <script>
 "use strict";
 /* ============================================================
@@ -498,14 +510,14 @@ function pweapon(hp,name,power,bname,bpow,o={}){return {key:'weapon',label:'Weap
   ability:atk(name,power,o),broken:atk(bname,bpow,{cd:0,cond:o.cond||'always',part:o.part||'core'})};}
 function ppart(key,label,hp,ability){return {key,label,maxHp:hp,ability};}
 const EN={
-  turret:{name:'TURRET NEST',type:'trap',mono:true,armor:22,speed:20,firepower:0,hp:120,abilities:[atk('Auto-Turret',15,{cd:0,part:'core'})]},
-  tank:{name:'SIEGE TANK',type:'tank',mono:true,armor:55,speed:6,firepower:8,hp:260,abilities:[atk('Siege Gun',18,{cd:1,part:'core'})]},
-  bot:{name:'MINI-BOT',type:'swarm',mono:true,armor:0,speed:12,firepower:8,hp:40,abilities:[atk('Zap',10,{cd:0,part:'core'})]},
-  scrap:{name:'SCRAP MECH',type:'mech',armor:6,speed:8,firepower:8,parts:[pcore(130),pweapon(45,'Rusty Cannon',16,'Sputter',6)]},
-  line:{name:'LINE MECH',type:'mech',armor:12,speed:9,firepower:12,parts:[pcore(150),pweapon(50,'Rifle',16,'Single Bolt',6),ppart('backpack','Backpack',50,atk('Missile',26,{cd:2,part:'core'}))]},
-  sniper:{name:'RAIL SNIPER',type:'sniper',armor:10,speed:15,firepower:30,parts:[pcore(130),pweapon(48,'Railshot',40,'Bad Shot',8,{cond:'target-lowest-integrity'})]},
-  bruiser:{name:'BRUISER',type:'mech',armor:20,speed:7,firepower:16,parts:[pcore(185),pweapon(60,'Hammer',26,'Punch',10,{cd:1,part:'weapon'})]},
-  warden:{name:'THE WARDEN',type:'boss',armor:28,speed:9,firepower:16,parts:[
+  turret:{name:'TURRET NEST',type:'trap',mono:true,armor:22,speed:20,firepower:0,hp:120,abilities:[atk('Auto-Turret',15,{cd:0,part:'core'})],sprite:{mono:'turret'}},
+  tank:{name:'SIEGE TANK',type:'tank',mono:true,armor:55,speed:6,firepower:8,hp:260,abilities:[atk('Siege Gun',18,{cd:1,part:'core'})],sprite:{mono:'tank'}},
+  bot:{name:'MINI-BOT',type:'swarm',mono:true,armor:0,speed:12,firepower:8,hp:40,abilities:[atk('Zap',10,{cd:0,part:'core'})],sprite:{mono:'bot'}},
+  scrap:{name:'SCRAP MECH',type:'mech',armor:6,speed:8,firepower:8,parts:[pcore(130),pweapon(45,'Rusty Cannon',16,'Sputter',6)],sprite:{loadout:{head:'hawkeye',core:'scrap',rarm:'scrapgun',legs:'tread'}}},
+  line:{name:'LINE MECH',type:'mech',armor:12,speed:9,firepower:12,parts:[pcore(150),pweapon(50,'Rifle',16,'Single Bolt',6),ppart('backpack','Backpack',50,atk('Missile',26,{cd:2,part:'core'}))],sprite:{loadout:{head:'owl',core:'bastion',rarm:'vulcan',larm:'missarm',backpack:'fieldkit',legs:'sprint'}}},
+  sniper:{name:'RAIL SNIPER',type:'sniper',armor:10,speed:15,firepower:30,parts:[pcore(130),pweapon(48,'Railshot',40,'Bad Shot',8,{cond:'target-lowest-integrity'})],sprite:{loadout:{head:'hawkeye',core:'runner',rarm:'gatling',legs:'sprint'}}},
+  bruiser:{name:'BRUISER',type:'mech',armor:20,speed:7,firepower:16,parts:[pcore(185),pweapon(60,'Hammer',26,'Punch',10,{cd:1,part:'weapon'})],sprite:{loadout:{head:'iris',core:'bastion',rarm:'plasma',larm:'shieldarm',legs:'tread'}}},
+  warden:{name:'THE WARDEN',type:'boss',armor:28,speed:9,firepower:16,sprite:{loadout:{head:'owl',core:'reactor',rarm:'gatling',larm:'shieldarm',backpack:'shpack',legs:'tread'}},parts:[
      pcore(420,sup('Overload Surge','buff',16,{cd:6,cond:'when-self-below-50'})),
      pweapon(85,'Siege Cannon',24,'Cracked Barrel',8,{cd:1,part:'core'}),
      ppart('backpack','Doom Array',70,atk('Overload Beam',46,{cd:2,cond:'target-lowest-integrity',part:'core'}))]},
@@ -555,7 +567,7 @@ function buildPlayerSimUnit(runMech){
     parts.push(part);
   }
   const d=runMech.derived;
-  return {id:'P',side:'player',name:runMech.name,type:'mech',mono:false,armor:d.armor,speed:d.speed,firepower:d.firepower,guard:0,cds:{},parts,hasAssist:false};
+  return {id:'P',side:'player',name:runMech.name,type:'mech',mono:false,armor:d.armor,speed:d.speed,firepower:d.firepower,guard:0,cds:{},parts,hasAssist:false,sprite:{loadout:runMech.loadout,scheme:runMech.scheme||'Vanguard'}};
 }
 function buildAssistSimUnit(spec){
   // a lent unit: one attack, side player, never targeted (enemies aim only at P), never dies.
@@ -567,13 +579,13 @@ function buildEnemySimUnit(def,idx){
   const id='E'+idx;
   if(def.mono){
     return {id,side:'enemy',name:def.name,type:def.type,mono:true,armor:def.armor,speed:def.speed,firepower:def.firepower,
-      hp:def.hp,maxHp:def.hp,guard:0,cds:{},
+      hp:def.hp,maxHp:def.hp,guard:0,cds:{},sprite:def.sprite,
       abilities:def.abilities.map((a,i)=>Object.assign({},a,{key:'m'+i,cond:a.condition,pt:a.partTarget||'core'}))};
   }
   const parts=def.parts.map(p=>({key:p.key,label:p.label,maxHp:p.maxHp,hp:p.maxHp,disabled:false,isCore:!!p.isCore,isWeapon:!!p.isWeapon,
     ability:p.ability?Object.assign({},p.ability):null,broken:p.broken?Object.assign({},p.broken):null,
     cond:p.ability?p.ability.condition:'always',pt:p.ability?(p.ability.partTarget||'core'):'core'}));
-  return {id,side:'enemy',name:def.name,type:def.type,mono:false,armor:def.armor,speed:def.speed,firepower:def.firepower,guard:0,cds:{},parts};
+  return {id,side:'enemy',name:def.name,type:def.type,mono:false,armor:def.armor,speed:def.speed,firepower:def.firepower,guard:0,cds:{},parts,sprite:def.sprite};
 }
 const corePart=u=>u.parts&&u.parts.find(p=>p.isCore);
 const unitAlive=u=>u.isAssist?true:(u.mono?u.hp>0:(corePart(u)?corePart(u).hp>0:false));
@@ -623,7 +635,7 @@ function resolveSkirmish(runMech, enemyDefs, seed, prebuff, assistSpec){
   const allies=assistU?[P,assistU]:[P];
   const all=()=>[...allies,...Es];
   const aliveArr=arr=>arr.filter(unitAlive);
-  const units0=all().map(u=>({id:u.id,side:u.side,name:u.name,type:u.type,mono:u.mono,armor:u.armor,speed:u.speed,isAssist:!!u.isAssist,
+  const units0=all().map(u=>({id:u.id,side:u.side,name:u.name,type:u.type,mono:u.mono,armor:u.armor,speed:u.speed,isAssist:!!u.isAssist,sprite:u.sprite,
     hp:u.mono?u.hp:undefined,maxHp:u.mono?u.maxHp:undefined,
     parts:u.mono?undefined:u.parts.map(p=>({key:p.key,label:p.label,maxHp:p.maxHp,startHp:p.hp,isCore:p.isCore,isWeapon:p.isWeapon,startDisabled:p.disabled}))}));
   const flat=[]; let result=null;
@@ -710,8 +722,9 @@ const PRESETS=[
   mkMech('SWIFT-2',{head:'owl',    core:'runner', rarm:'vulcan', larm:'saber',    backpack:'thrust', legs:'sprint'}),  // ground+fly striker — air/highland/chasm
   mkMech('OTTER-9',{head:'hawkeye',core:'reactor',rarm:'gatling',larm:'missarm',  backpack:'fieldkit',legs:'dive'}),   // swim support — water; assist + repair kit
 ];
+const SCHEME_DEFAULTS=['Vanguard','Venom','Ember'];
 const state={
-  mechs:PRESETS.map(m=>({name:m.name,loadout:Object.assign({},m.loadout),tactics:{},partTargets:{}})),
+  mechs:PRESETS.map((m,i)=>({name:m.name,loadout:Object.assign({},m.loadout),tactics:{},partTargets:{},scheme:SCHEME_DEFAULTS[i]||'Vanguard'})),
   activeMech:0, selSlot:'rarm',
   deploy:null,      // {missionIdx, assign:[mechIdx|null per lane]}
   run:null,
@@ -720,6 +733,77 @@ const cur=()=>state.mechs[state.activeMech];
 const $=s=>document.querySelector(s);
 const el=(t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e;};
 
+/* ---------- SPRITE RENDERER (Phase 5 art · assets/sprites.js) ---------- */
+const SPR=window.SPRITES||{}, FRAME=64, DRAWORDER=['backpack','legs','larm','core','head','rarm'];
+const SCHEMES={
+  Vanguard:{base:["#0e1526","#16233f","#243a63"],sec:["#0c6f82","#17aecb","#22e0ff"],trim:["#c79a1f","#ffd23e"]},
+  Ember:{base:["#1a120c","#2a1c10","#45301a"],sec:["#8a3a12","#d2641e","#ff8a3e"],trim:["#b5311f","#ff5a3e"]},
+  Venom:{base:["#0a1a12","#10261a","#1c4230"],sec:["#2f7d2a","#58c23a","#7dff6b"],trim:["#0c7f96","#22e0ff"]},
+  Sovereign:{base:["#141026","#1e1636","#322a5c"],sec:["#5a3a8a","#8a5fc8","#b98cff"],trim:["#b5236a","#ff2e88"]},
+  Warhound:{base:["#141014","#241820","#3a2a34"],sec:["#8a1f3a","#d2244f","#ff3b6b"],trim:["#c9c9d6","#ffffff"]},
+  Scarlet:{base:["#3a0e10","#7a1c22","#b83038"],sec:["#0c6f82","#17aecb","#22e0ff"],trim:["#ffcf3e","#ffe98f"]},
+  Solar:{base:["#3a1e08","#7a3e12","#c66a1e"],sec:["#123a6e","#2a6ec2","#4aa8ff"],trim:["#ffd23e","#fff0a0"]},
+  Amber:{base:["#3a2e08","#786218","#c9a52a"],sec:["#123a6e","#2a6ec2","#4aa8ff"],trim:["#ff6a2e","#ffb46b"]},
+  Verdant:{base:["#0e2a14","#1a5226","#2c8c3e"],sec:["#7a5a12","#c9a52a","#ffe066"],trim:["#ff3b6b","#ff85a8"]},
+  Azure:{base:["#0e1a3a","#1a2f70","#2c4ec8"],sec:["#0c6f82","#17aecb","#22e0ff"],trim:["#ffd23e","#fff0a0"]},
+  Indigo:{base:["#14123a","#221e6e","#3a34b4"],sec:["#5a3a8a","#8a5fc8","#b98cff"],trim:["#22e0ff","#a8f4ff"]},
+  Amethyst:{base:["#2a0e3a","#521c74","#8230b8"],sec:["#8a1f5a","#d2246e","#ff3b9b"],trim:["#ffd23e","#fff0a0"]},
+  Enemy:{base:["#160a10","#2a1420","#48212f"],sec:["#8a1f2a","#d22436","#ff3b4b"],trim:["#c98a1f","#ffb43e"]},
+};
+const SCHEME_NAMES=Object.keys(SCHEMES).filter(s=>s!=='Enemy');
+const SMASTER={base:["#0e1526","#16233f","#243a63"],sec:["#0c6f82","#17aecb","#22e0ff"],trim:["#c79a1f","#ffd23e"],glow:"#ffffff"};
+const _hx=h=>[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
+const _key=(r,g,b)=>r<<16|g<<8|b;
+function _lut(scheme){const s=SCHEMES[scheme]||SCHEMES.Vanguard,m=new Map();
+  SMASTER.base.forEach((h,i)=>m.set(_key(..._hx(h)),_hx(s.base[i])));
+  SMASTER.sec.forEach((h,i)=>m.set(_key(..._hx(h)),_hx(s.sec[i])));
+  SMASTER.trim.forEach((h,i)=>m.set(_key(..._hx(h)),_hx(s.trim[i])));
+  m.set(_key(..._hx(SMASTER.glow)),_hx(s.trim[1]));return m;}
+const _imgs={}; let _spritesReady=false;
+function preloadSprites(cb){const ks=Object.keys(SPR);if(!ks.length){_spritesReady=true;cb&&cb();return;}
+  let done=0;ks.forEach(k=>{const im=new Image();im.onload=im.onerror=()=>{_imgs[k]=im;if(++done>=ks.length){_spritesReady=true;cb&&cb();}};im.src=SPR[k].uri;});}
+const _rc={};
+function _recolored(k,scheme){const ck=k+'|'+scheme;if(_rc[ck])return _rc[ck];
+  const im=_imgs[k],c=document.createElement('canvas');c.width=im.width;c.height=im.height;
+  const x=c.getContext('2d');x.imageSmoothingEnabled=false;x.drawImage(im,0,0);
+  const L=_lut(scheme),d=x.getImageData(0,0,c.width,c.height),p=d.data;
+  for(let i=0;i<p.length;i+=4){if(p[i+3]===0)continue;const r=L.get(_key(p[i],p[i+1],p[i+2]));if(r){p[i]=r[0];p[i+1]=r[1];p[i+2]=r[2];}}
+  x.putImageData(d,0,0);_rc[ck]=c;return c;}
+function _frameIndex(k,tag){const m=SPR[k];return (m&&m.tags&&m.tags[tag]!=null)?m.tags[tag]:0;}
+function drawMech(canvas,loadout,scheme,scale){const ctx=canvas.getContext('2d');ctx.imageSmoothingEnabled=false;
+  ctx.clearRect(0,0,canvas.width,canvas.height);if(!_spritesReady)return;
+  for(const slot of DRAWORDER){const id=loadout[slot];if(!id)continue;const key=slot+'/'+id;if(!_imgs[key])continue;
+    const sheet=_recolored(key,scheme),fi=_frameIndex(key,'idle');
+    ctx.drawImage(sheet,fi*FRAME,0,FRAME,FRAME,0,0,FRAME*scale,FRAME*scale);}}
+function mkMechCanvas(scale){const c=document.createElement('canvas');c.width=FRAME*scale;c.height=FRAME*scale;
+  c.style.width=(FRAME*scale)+'px';c.style.imageRendering='pixelated';return c;}
+function schemeOf(m){return m.scheme||'Vanguard';}
+function drawMechTags(canvas,loadout,scheme,tags,latched,scale){const ctx=canvas.getContext('2d');ctx.imageSmoothingEnabled=false;
+  ctx.clearRect(0,0,canvas.width,canvas.height);if(!_spritesReady)return;
+  for(const slot of DRAWORDER){const id=loadout[slot];if(!id)continue;const key=slot+'/'+id;if(!_imgs[key])continue;
+    const tag=(latched&&latched[slot])||(tags&&tags[slot])||'idle';
+    const sheet=_recolored(key,scheme),fi=_frameIndex(key,tag);
+    ctx.drawImage(sheet,fi*FRAME,0,FRAME,FRAME,0,0,FRAME*scale,FRAME*scale);}}
+function drawMonoSprite(canvas,monoId,scheme,scale){const key='mono/'+monoId,ctx=canvas.getContext('2d');ctx.imageSmoothingEnabled=false;
+  ctx.clearRect(0,0,canvas.width,canvas.height);if(!_spritesReady||!_imgs[key])return;
+  const m=SPR[key],sz=Array.isArray(m.size)?m.size:[m.size,m.size],sheet=_recolored(key,scheme);
+  ctx.drawImage(sheet,0,0,sz[0],sz[1],0,0,sz[0]*scale,sz[1]*scale);}
+const ENEMY_KEY2SLOT={weapon:'rarm',core:'core',backpack:'backpack',head:'head',legs:'legs',larm:'larm'};
+// Compose a mech, crop to its non-transparent content box, and render it scaled to fill `canvas`.
+function drawMechCropped(canvas,loadout,scheme,scale,pad){
+  scale=scale||3;pad=pad==null?1:pad;
+  const off=document.createElement('canvas');off.width=FRAME;off.height=FRAME;
+  drawMechTags(off,loadout,scheme,null,null,1);
+  let x0=FRAME,y0=FRAME,x1=0,y1=0,any=false;
+  if(_spritesReady){const d=off.getContext('2d').getImageData(0,0,FRAME,FRAME).data;
+    for(let y=0;y<FRAME;y++)for(let x=0;x<FRAME;x++){if(d[(y*FRAME+x)*4+3]){any=true;if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y;}}}
+  if(!any){x0=0;y0=0;x1=FRAME-1;y1=FRAME-1;}
+  x0=Math.max(0,x0-pad);y0=Math.max(0,y0-pad);x1=Math.min(FRAME-1,x1+pad);y1=Math.min(FRAME-1,y1+pad);
+  const w=x1-x0+1,h=y1-y0+1;canvas.width=w*scale;canvas.height=h*scale;
+  const ctx=canvas.getContext('2d');ctx.imageSmoothingEnabled=false;
+  ctx.drawImage(off,x0,y0,w,h,0,0,w*scale,h*scale);
+}
+
 /* ---------- HANGAR TABS ---------- */
 function renderHangar(){
   const box=$('#hangar');box.innerHTML='';
@@ -727,12 +811,21 @@ function renderHangar(){
     const tags=mechTags(m.loadout).map(t=>MOB_LABEL[t]).join(' · ');
     const b=el('div','mtab'+(i===state.activeMech?' sel':''));
     b.innerHTML=`<div class="mtn">Mech ${i+1}</div><div class="mtname">${m.name}</div><div class="mttags">${tags}</div>`;
+    const cv=document.createElement('canvas');drawMechCropped(cv,m.loadout,schemeOf(m),3);b.appendChild(cv);
     b.onclick=()=>{state.activeMech=i;garageRefresh();};
     box.appendChild(b);
   });
 }
 
 /* ---------- GARAGE ---------- */
+function renderPreview(){
+  const box=$('#mechPreview');if(!box)return;box.innerHTML='';const m=cur();
+  const cv=mkMechCanvas(3);drawMech(cv,m.loadout,schemeOf(m),3);box.appendChild(cv);
+  const sel=el('select');
+  SCHEME_NAMES.forEach(s=>{const o=document.createElement('option');o.value=s;o.textContent=s;if(s===schemeOf(m))o.selected=true;sel.appendChild(o);});
+  sel.onchange=()=>{m.scheme=sel.value;renderPreview();renderHangar();};
+  const pick=el('div','schemepick');pick.appendChild(el('span','ml','Paint scheme'));pick.appendChild(sel);box.appendChild(pick);
+}
 function renderFrame(){
   const f=$('#frame');f.innerHTML='';const lo=cur().loadout;
   const cls={head:'fr-head',backpack:'fr-bp',rarm:'fr-rarm',core:'fr-core',larm:'fr-larm',legs:'fr-legs'};
@@ -773,7 +866,7 @@ function renderParts(){
   }
 }
 function clearSlotTac(slot){const m=cur();delete m.tactics[slot];delete m.partTargets[slot];}
-function equipDone(){renderFrame();renderParts();renderStats();renderMobility();renderTactics();renderHangar();validate();}
+function equipDone(){renderPreview();renderFrame();renderParts();renderStats();renderMobility();renderTactics();renderHangar();validate();}
 function preview(slot,id){const pv=Object.assign({},cur().loadout);pv[slot]=id;renderStats(pv);}
 function clearPrev(){renderStats();}
 function renderStats(previewLo){
@@ -821,7 +914,7 @@ function garageRefresh(){$('#mechName').value=cur().name;equipDone();}
 $('#mechName').oninput=(e)=>{cur().name=e.target.value.slice(0,14)||('MECH-'+(state.activeMech+1));renderHangar();};
 $('#mechName').onblur=()=>{if(!cur().name.trim()){cur().name='MECH-'+(state.activeMech+1);garageRefresh();}};
 $('#toMission').onclick=()=>{if(validate())show('mission');};
-$('#resetBtn').onclick=()=>{const base=PRESETS[state.activeMech];state.mechs[state.activeMech]={name:base.name,loadout:Object.assign({},base.loadout),tactics:{},partTargets:{}};garageRefresh();};
+$('#resetBtn').onclick=()=>{const base=PRESETS[state.activeMech];state.mechs[state.activeMech]={name:base.name,loadout:Object.assign({},base.loadout),tactics:{},partTargets:{},scheme:SCHEME_DEFAULTS[state.activeMech]||'Vanguard'};garageRefresh();};
 $('#randomBtn').onclick=()=>{const m=cur();for(const slot of SLOTS){const o=partsForSlot(slot);m.loadout[slot]=o[Math.floor(Math.random()*o.length)].id;}m.tactics={};m.partTargets={};
   if(!validate())m.loadout.rarm='vulcan';garageRefresh();};
 
@@ -897,7 +990,7 @@ $('#launchBtn').onclick=()=>launchRun();
 function runtimeMech(mechDef){
   const d=derive(mechDef.loadout);
   const parts={};for(const slot of SLOTS){if(mechDef.loadout[slot]){const mx=partMaxHp(PART[mechDef.loadout[slot]]);parts[slot]={hp:mx,maxHp:mx,disabled:false};}}
-  return {name:mechDef.name,loadout:mechDef.loadout,tactics:mechDef.tactics,partTargets:mechDef.partTargets,derived:d,parts,alive:true};
+  return {name:mechDef.name,loadout:mechDef.loadout,tactics:mechDef.tactics,partTargets:mechDef.partTargets,derived:d,parts,alive:true,scheme:mechDef.scheme};
 }
 function launchRun(){
   const d=state.deploy,m=MISSIONS[d.missionIdx];
@@ -1086,7 +1179,7 @@ function engageFight(li){
 const TYPELAB={mech:'Mech',trap:'Trap',tank:'Tank',sniper:'Sniper',swarm:'Bot',boss:'Boss',assist:'Assist'};
 function playCutscene(log,node,li,assistFrom){
   show('skirmish');$('#skName').textContent='▷ '+node.name+' · Lane '+(li+1);$('#skEnd').innerHTML='';$('#skContinue').style.display='none';$('#skSkip').style.display='';$('#banner').innerHTML='&nbsp;';
-  const disp={},refs={};
+  const disp={},refs={},sprState={};
   const sideP=$('#sidePlayer'),sideE=$('#sideEnemy');sideP.innerHTML='';sideE.innerHTML='';
   for(const u of log.units){
     const card=el('div','ucard '+(u.isAssist?'player assist':u.side==='player'?'player':'enemy'));
@@ -1100,7 +1193,15 @@ function playCutscene(log,node,li,assistFrom){
       inner+='</div>';
     }
     card.innerHTML=inner;(u.side==='player'?sideP:sideE).appendChild(card);refs[u.id]=card;
+    if(u.sprite&&!u.isAssist){const flip=u.side==='enemy',S=2;let cv=document.createElement('canvas');
+      if(u.sprite.mono){const m=SPR['mono/'+u.sprite.mono],sz=m?(Array.isArray(m.size)?m.size:[m.size,m.size]):[64,64];
+        cv.width=sz[0]*S;cv.height=sz[1]*S;sprState[u.id]={mono:u.sprite.mono,scheme:'Enemy',scale:S,cv};}
+      else{cv.width=FRAME*S;cv.height=FRAME*S;
+        sprState[u.id]={loadout:u.sprite.loadout,scheme:(u.side==='player'?(u.sprite.scheme||'Vanguard'):'Enemy'),scale:S,tags:{},latched:{},cv};}
+      cv.className='usprite'+(flip?' flip':'');card.insertBefore(cv,card.firstChild);}
   }
+  function drawUnitSprite(id){const s=sprState[id];if(!s)return;
+    if(s.mono)drawMonoSprite(s.cv,s.mono,s.scheme,s.scale);else drawMechTags(s.cv,s.loadout,s.scheme,s.tags,s.latched,s.scale);}
   function setUnit(id){
     const d=disp[id],card=refs[id];
     let coreHp,coreMax,dead;
@@ -1117,15 +1218,26 @@ function playCutscene(log,node,li,assistFrom){
       chip.classList.toggle('hurt',!pp.disabled&&pp.hp/pp.max<0.5);}
   }
   for(const id in disp)setUnit(id);
+  for(const id in sprState)drawUnitSprite(id);
+  function coreDead(id){const d=disp[id];if(!d)return false;if(d.mono)return d.hp<=0&&!d.isAssist;
+    const c=d.parts[Object.keys(d.parts).find(k=>d.parts[k].isCore)];return c&&c.hp<=0;}
   function floatNum(id,txt,color){const c=refs[id];if(!c)return;const f=el('span','float',txt);f.style.color=color;c.appendChild(f);setTimeout(()=>f.remove(),1000);}
   function applyAction(a,instant){
     if(!instant){Object.values(refs).forEach(c=>c.classList.remove('acting'));refs[a.actorId]&&refs[a.actorId].classList.add('acting');
-      $('#banner').innerHTML=`<span class="rd">R${a.round}</span>${a.actorName} ▸ ${a.abilityName}${a.broken?' <span style="color:var(--red)">(degraded)</span>':''}`;}
+      $('#banner').innerHTML=`<span class="rd">R${a.round}</span>${a.actorName} ▸ ${a.abilityName}${a.broken?' <span style="color:var(--red)">(degraded)</span>':''}`;
+      for(const id in sprState){const s=sprState[id];if(s.tags)s.tags={};}
+      const as=sprState[a.actorId];if(as&&as.tags){const w=as.loadout.rarm?'rarm':(as.loadout.larm?'larm':'core');as.tags[w]='act';drawUnitSprite(a.actorId);}}
     for(const t of a.targets){const d=disp[t.unitId];if(!d)continue;
       if(t.heal){if(d.mono)d.hp=t.hpAfter;else d.parts[t.partKey].hp=t.hpAfter;}
       else if(t.revived){d.parts[t.partKey].hp=t.hpAfter;d.parts[t.partKey].disabled=false;}
       else{if(d.mono)d.hp=t.hpAfter;else{d.parts[t.partKey].hp=t.hpAfter;if(t.disabled)d.parts[t.partKey].disabled=true;}}
       setUnit(t.unitId);
+      const st=sprState[t.unitId];
+      if(st&&!st.mono){const slot=ENEMY_KEY2SLOT[t.partKey]||t.partKey;
+        if(t.revived){delete st.latched[slot];}
+        else if(!t.heal){if(t.disabled&&slot!=='core')st.latched[slot]='disabled';else if(!coreDead(t.unitId))st.tags[slot]='hit';}
+        if(coreDead(t.unitId))st.latched['core']='destroyed';
+        drawUnitSprite(t.unitId);}
       if(!instant){let txt,col;
         if(t.heal){txt='+'+t.value;col='var(--lime)';}
         else if(t.revived){txt='REPAIRED';col='var(--lime)';}
@@ -1139,6 +1251,7 @@ function playCutscene(log,node,li,assistFrom){
   }
   let i=0,timer=null;
   function finish(){Object.values(refs).forEach(c=>c.classList.remove('acting'));$('#banner').innerHTML='&nbsp;';
+    for(const id in sprState){const s=sprState[id];if(s.tags)s.tags={};drawUnitSprite(id);}
     const win=log.result==='win';
     $('#skEnd').innerHTML=`<div class="skirmend"><span class="st ${win?'win':'lose'}">${win?'SKIRMISH WON':'CORE DESTROYED'}</span></div>`;
     $('#skSkip').style.display='none';$('#skContinue').style.display='';}
@@ -1183,6 +1296,7 @@ function show(name){for(const s of document.querySelectorAll('.screen'))s.classL
   if(name==='deploy')renderDeploy();
   window.scrollTo({top:0});}
 garageRefresh();
+preloadSprites(()=>{renderPreview();renderHangar();});
 
 /* ---------- info / how-to-play ---------- */
 function openInfo(){$('#infoModal').classList.add('open');}

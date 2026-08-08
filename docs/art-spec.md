@@ -157,6 +157,13 @@ maps indices 1–3 / 4–6 / 7–9 onto; give shadow/mid/light for each):
 | **Venom** | `#0a1a12 #10261a #1c4230` | `#2f7d2a #58c23a #7dff6b` | `#0c7f96 #22e0ff` |
 | **Sovereign** | `#141026 #1e1636 #322a5c` | `#5a3a8a #8a5fc8 #b98cff` | `#b5236a #ff2e88` |
 | **Warhound** | `#141014 #241820 #3a2a34` | `#8a1f3a #d2244f #ff3b6b` | `#c9c9d6 #ffffff` |
+| **Scarlet** (R) | `#3a0e10 #7a1c22 #b83038` | `#0c6f82 #17aecb #22e0ff` | `#ffcf3e #ffe98f` |
+| **Solar** (O) | `#3a1e08 #7a3e12 #c66a1e` | `#123a6e #2a6ec2 #4aa8ff` | `#ffd23e #fff0a0` |
+| **Amber** (Y) | `#3a2e08 #786218 #c9a52a` | `#123a6e #2a6ec2 #4aa8ff` | `#ff6a2e #ffb46b` |
+| **Verdant** (G) | `#0e2a14 #1a5226 #2c8c3e` | `#7a5a12 #c9a52a #ffe066` | `#ff3b6b #ff85a8` |
+| **Azure** (B) | `#0e1a3a #1a2f70 #2c4ec8` | `#0c6f82 #17aecb #22e0ff` | `#ffd23e #fff0a0` |
+| **Indigo** (I) | `#14123a #221e6e #3a34b4` | `#5a3a8a #8a5fc8 #b98cff` | `#22e0ff #a8f4ff` |
+| **Amethyst** (V) | `#2a0e3a #521c74 #8230b8` | `#8a1f5a #d2246e #ff3b9b` | `#ffd23e #fff0a0` |
 | **Enemy (hostile)** | `#160a10 #2a1420 #48212f` | `#8a1f2a #d22436 #ff3b4b` | `#c98a1f #ffb43e` |
 
 Enemies always use the hostile ramp regardless of any player scheme, so **friend-vs-foe reads

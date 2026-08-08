@@ -1,0 +1,13 @@
+{
+"size": 64,
+"frames": 5,
+"tags": {
+"idle": 0,
+"act": 1,
+"hit": 2,
+"disabled": 3,
+"destroyed": 4
+},
+"slot": "core",
+"id": "scrap"
+}

@@ -1,0 +1,145 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`resolveSkirmish — golden logs > OTTER-9 vs Tank+Sniper 1`] = `
+{
+  "actions": 11,
+  "coreAfter": 0,
+  "coreMax": 210,
+  "result": "lose",
+  "rounds": 3,
+  "trace": [
+    "R1 E1 Railshot -> P/core -62=148",
+    "R1 P Lock-On ->  fp+10",
+    "R1 P Suppress -> E0/core -17=243, E1/core -31=99",
+    "R1 P Missile Volley -> E0/core -21=222, E1/core -28=71",
+    "R1 E0 Siege Gun -> P/core -26=122",
+    "R2 E1 Railshot -> P/core -67=55",
+    "R2 P Reactor Vent -> P heal+34=89",
+    "R2 P Suppress -> E0/core -17=205, E1/core -32=39",
+    "R2 P Missile Volley -> E0/core -20=185, E1/core -33=6",
+    "R2 E0 Siege Gun -> P/core -22=67",
+    "R3 E1 Railshot -> P/core -68=0 [x]",
+  ],
+}
+`;
+
+exports[`resolveSkirmish — golden logs > ROOK-7 vs Scrap 1`] = `
+{
+  "actions": 8,
+  "coreAfter": 187,
+  "coreMax": 240,
+  "result": "win",
+  "rounds": 5,
+  "trace": [
+    "R1 E0 Rusty Cannon -> P/core -11=229",
+    "R1 P Overhead Slash -> E0/core -67=63",
+    "R2 E0 Rusty Cannon -> P/core -11=218",
+    "R3 E0 Rusty Cannon -> P/core -10=208",
+    "R3 P Overhead Slash -> E0/core -60=3",
+    "R4 E0 Rusty Cannon -> P/core -11=197",
+    "R5 E0 Rusty Cannon -> P/core -10=187",
+    "R5 P Overhead Slash -> E0/core -76=0 [x]",
+  ],
+}
+`;
+
+exports[`resolveSkirmish — golden logs > ROOK-7 vs Warden 1`] = `
+{
+  "actions": 51,
+  "coreAfter": 117,
+  "coreMax": 240,
+  "result": "win",
+  "rounds": 15,
+  "trace": [
+    "R1 E0 Siege Cannon -> P/core -16=224",
+    "R1 E0 Overload Beam -> P/core -27=197",
+    "R1 P Overhead Slash -> E0/core -54=366",
+    "R2 E0 Siege Cannon -> P/core -16=181",
+    "R3 E0 Siege Cannon -> P/core -18=163",
+    "R3 E0 Overload Beam -> P/core -30=133",
+    "R3 P Overhead Slash -> E0/core -62=304",
+    "R4 E0 Siege Cannon -> P/core -16=117",
+    "R4 P Raise Guard ->  guard+34",
+    "R4 P Barrier ->  guard+44",
+    "R5 E0 Siege Cannon -> P/core -0=117 [block]",
+    "R5 E0 Overload Beam -> P/core -0=117 [block]",
+    "R5 P Raise Guard ->  guard+34",
+    "R5 P Overhead Slash -> E0/core -58=246",
+    "R6 E0 Siege Cannon -> P/core -0=117 [block]",
+    "R6 P Raise Guard ->  guard+34",
+    "R6 P Barrier ->  guard+44",
+    "R7 E0 Siege Cannon -> P/core -0=117 [block]",
+    "R7 E0 Overload Beam -> P/core -0=117 [block]",
+    "R7 P Raise Guard ->  guard+34",
+    "R7 P Overhead Slash -> E0/core -56=190",
+    "R8 E0 Overload Surge ->  fp+16",
+    "R8 E0 Siege Cannon -> P/core -0=117 [block]",
+    "R8 P Raise Guard ->  guard+34",
+    "R8 P Barrier ->  guard+44",
+    "R9 E0 Siege Cannon -> P/core -0=117 [block]",
+    "R9 E0 Overload Beam -> P/core -0=117 [block]",
+    "R9 P Raise Guard ->  guard+34",
+    "R9 P Overhead Slash -> E0/core -62=128",
+    "R10 E0 Siege Cannon -> P/core -0=117 [block]",
+    "R10 P Raise Guard ->  guard+34",
+    "R10 P Barrier ->  guard+44",
+    "R11 E0 Siege Cannon -> P/core -0=117 [block]",
+    "R11 E0 Overload Beam -> P/core -0=117 [block]",
+    "R11 P Raise Guard ->  guard+34",
+    "R11 P Overhead Slash -> E0/core -57=71",
+    "R12 E0 Siege Cannon -> P/core -0=117 [block]",
+    "R12 P Raise Guard ->  guard+34",
+    "R12 P Barrier ->  guard+44",
+    "R13 E0 Siege Cannon -> P/core -0=117 [block]",
+    "R13 E0 Overload Beam -> P/core -0=117 [block]",
+    "R13 P Raise Guard ->  guard+34",
+    "R13 P Overhead Slash -> E0/core -59=12",
+    "R14 E0 Overload Surge ->  fp+16",
+    "R14 E0 Siege Cannon -> P/core -0=117 [block]",
+    "R14 P Raise Guard ->  guard+34",
+    "R14 P Barrier ->  guard+44",
+    "R15 E0 Siege Cannon -> P/core -0=117 [block]",
+    "R15 E0 Overload Beam -> P/core -0=117 [block]",
+    "R15 P Raise Guard ->  guard+34",
+    "R15 P Overhead Slash -> E0/core -62=0 [x]",
+  ],
+}
+`;
+
+exports[`resolveSkirmish — golden logs > SWIFT-2 vs Bot swarm 1`] = `
+{
+  "actions": 4,
+  "coreAfter": 173,
+  "coreMax": 190,
+  "result": "win",
+  "rounds": 2,
+  "trace": [
+    "R1 P Burst Fire -> E0/core -53=0",
+    "R1 P Riposte -> E1/core -61=0",
+    "R1 E2 Zap -> P/core -17=173",
+    "R2 P Burst Fire -> E2/core -47=0",
+  ],
+}
+`;
+
+exports[`resolveSkirmish — golden logs > SWIFT-2 vs Turret+Line 1`] = `
+{
+  "actions": 10,
+  "coreAfter": 95,
+  "coreMax": 190,
+  "result": "win",
+  "rounds": 3,
+  "trace": [
+    "R1 P Burst Fire -> E0/core -38=82",
+    "R1 P Riposte -> E0/core -50=32",
+    "R1 E0 Auto-Turret -> P/core -14=176",
+    "R1 E1 Rifle -> P/core -24=152",
+    "R1 E1 Missile -> P/core -33=119",
+    "R2 P Burst Fire -> E0/core -44=0",
+    "R2 P Riposte -> E1/core -57=93",
+    "R2 E1 Rifle -> P/core -24=95",
+    "R3 P Burst Fire -> E1/core -40=53",
+    "R3 P Riposte -> E1/core -53=0 [x]",
+  ],
+}
+`;

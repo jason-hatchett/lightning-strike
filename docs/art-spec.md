@@ -228,7 +228,7 @@ The engine keys sprites by `slot/id`, so a mismatch = missing art.
 ## 8. Full asset list (from the current build)
 
 Every id below needs a sprite. **Family** tells the artist the silhouette to hit. (Source of
-truth: `PARTS` and `EN` in `prototype-v4.html`.)
+truth: `PARTS` and `EN` in `src/data.js`.)
 
 **HEAD** (`utility`): `hawkeye`, `iris`, `owl` — small sensor heads; vary the eye/antenna.
 **CORE** (`chassis`): `bastion` (heavy/tanky), `runner` (slim/fast), `reactor` (glowing vents).

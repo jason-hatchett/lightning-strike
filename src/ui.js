@@ -394,11 +394,11 @@ function engageFight(li){
 const TYPELAB={mech:'Mech',trap:'Trap',tank:'Tank',sniper:'Sniper',swarm:'Bot',boss:'Boss',assist:'Assist'};
 function playCutscene(log,node,li,assistFrom){
   show('skirmish');$('#skName').textContent='▷ '+node.name+' · Lane '+(li+1);$('#skEnd').innerHTML='';$('#skContinue').style.display='none';$('#skSkip').style.display='';$('#banner').innerHTML='&nbsp;';
-  const disp={},refs={},sprState={};
+  const disp={},refs={},sprState={},statusDisp={};
   const sideP=$('#sidePlayer'),sideE=$('#sideEnemy');sideP.innerHTML='';sideE.innerHTML='';
   for(const u of log.units){
     const card=el('div','ucard '+(u.isAssist?'player assist':u.side==='player'?'player':'enemy'));
-    let inner=`<div class="un">${u.name}<span class="corehp" data-core="${u.id}"></span></div><div class="utype">${u.isAssist?'Assist · lent shot':(TYPELAB[u.type]||'Unit')+' · ARM '+u.armor+' · SPD '+u.speed}</div><div class="corebar"><div class="corefill" data-corefill="${u.id}"></div></div>`;
+    let inner=`<div class="un">${u.name}<span class="corehp" data-core="${u.id}"></span></div><div class="utype">${u.isAssist?'Assist · lent shot':(TYPELAB[u.type]||'Unit')+' · ARM '+u.armor+' · SPD '+u.speed}</div><div class="statusrow" data-status="${u.id}"></div><div class="corebar"><div class="corefill" data-corefill="${u.id}"></div></div>`;
     if(u.mono){disp[u.id]={mono:true,hp:u.hp,max:u.maxHp,isAssist:!!u.isAssist};}
     else{disp[u.id]={mono:false,parts:{}};
       inner+='<div class="partstrip">';
@@ -415,6 +415,11 @@ function playCutscene(log,node,li,assistFrom){
         sprState[u.id]={loadout:u.sprite.loadout,scheme:(u.side==='player'?(u.sprite.scheme||'Vanguard'):'Enemy'),scale:S,tags:{},latched:{},cv};}
       cv.className='usprite'+(flip?' flip':'');card.insertBefore(cv,card.firstChild);}
   }
+  const STATUS_META={burn:{icon:'🔥',label:'Burn'},emp:{icon:'⚡',label:'EMP'}};
+  function renderStatus(id){const card=refs[id];if(!card)return;const row=card.querySelector(`[data-status="${id}"]`);if(!row)return;
+    const list=statusDisp[id]||[];
+    row.innerHTML=list.map(s=>{const m=STATUS_META[s.type]||{icon:'?',label:s.type};
+      return `<span class="spip ${s.type}" title="${m.label}: ${s.rounds} round${s.rounds===1?'':'s'} left">${m.icon} ${s.rounds}</span>`;}).join('');}
   function drawUnitSprite(id){const s=sprState[id];if(!s)return;
     if(s.mono)drawMonoSprite(s.cv,s.mono,s.scheme,s.scale);else drawMechTags(s.cv,s.loadout,s.scheme,s.tags,s.latched,s.scale);}
   function setUnit(id){
@@ -432,12 +437,13 @@ function playCutscene(log,node,li,assistFrom){
       chip.classList.toggle('disabled',pp.disabled&&!pp.isWeapon);chip.classList.toggle('degraded',pp.disabled&&pp.isWeapon);
       chip.classList.toggle('hurt',!pp.disabled&&pp.hp/pp.max<0.5);}
   }
-  for(const id in disp)setUnit(id);
+  for(const id in disp){setUnit(id);renderStatus(id);}
   for(const id in sprState)drawUnitSprite(id);
   function coreDead(id){const d=disp[id];if(!d)return false;if(d.mono)return d.hp<=0&&!d.isAssist;
     const c=d.parts[Object.keys(d.parts).find(k=>d.parts[k].isCore)];return c&&c.hp<=0;}
   function floatNum(id,txt,color){const c=refs[id];if(!c)return;const f=el('span','float',txt);f.style.color=color;c.appendChild(f);setTimeout(()=>f.remove(),1000);}
   function applyAction(a,instant){
+    if(a.statusChanges){for(const id in a.statusChanges){statusDisp[id]=a.statusChanges[id];renderStatus(id);}}
     const realAct=a.kind!=='status'&&a.kind!=='stunned'; // burn/stun ticks aren't the actor "acting"
     if(!instant){Object.values(refs).forEach(c=>c.classList.remove('acting'));if(realAct)refs[a.actorId]&&refs[a.actorId].classList.add('acting');
       $('#banner').innerHTML=`<span class="rd">R${a.round}</span>${a.actorName} ▸ ${a.abilityName}${a.broken?' <span style="color:var(--red)">(degraded)</span>':''}`;

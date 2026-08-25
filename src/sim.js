@@ -97,13 +97,16 @@ function addStatus(target, s) {
   if (ex) { ex.rounds = Math.max(ex.rounds, s.rounds); ex.power = Math.max(ex.power || 0, s.power || 0); }
   else target.status.push({ type: s.type, rounds: s.rounds, power: s.power || 0 });
 }
+// A copy of a unit's active statuses (type + remaining rounds) for the UI to render.
+function statusSnapshot(u) { return (u.status || []).map(s => ({ type: s.type, rounds: s.rounds })); }
 // Resolve a unit's active statuses at the start of its turn: burn deals flat (no-rng,
-// deterministic) damage; emp flags a skipped action. Returns {stunned}. Ticks emit a
-// log entry so the cutscene can show them. Runs only when the unit has statuses, so
-// status-free fights are byte-identical to before.
+// deterministic) damage; emp flags a skipped action. Emits a log entry per burn tick and
+// returns {stunned, snap} (snap = the unit's statuses AFTER this tick, so callers can put
+// it on the stun entry). Runs only when the unit has statuses, so status-free fights are
+// byte-identical to before.
 function tickStatus(u, round, flat) {
-  if (!u.status || !u.status.length) return { stunned: false };
-  let stunned = false;
+  if (!u.status || !u.status.length) return { stunned: false, snap: [] };
+  let stunned = false; const burnActs = [];
   for (const s of u.status) {
     if (s.type === 'emp') { stunned = true; }
     else if (s.type === 'burn') {
@@ -114,14 +117,17 @@ function tickStatus(u, round, flat) {
       else { part.hp = Math.max(0, part.hp - dealt); hpAfter = part.hp; }
       const disabled = !u.mono && part.hp <= 0;
       const killed = u.mono ? u.hp <= 0 : (part.isCore && part.hp <= 0);
-      flat.push({
+      const a = {
         round, actorId: u.id, actorName: u.name, actorSide: u.side, abilityName: 'Burn', kind: 'status', type: 'status',
-        targets: [{ unitId: u.id, partKey: part ? part.key : 'core', partLabel: part ? part.label : null, name: u.name, value: dealt, hpAfter, blocked: false, disabled, killed, appliedStatus: 'burn' }]
-      });
+        targets: [{ unitId: u.id, partKey: part ? part.key : 'core', partLabel: part ? part.label : null, name: u.name, value: dealt, hpAfter, blocked: false, disabled, killed }]
+      };
+      burnActs.push(a); flat.push(a);
     }
   }
   u.status = u.status.map(s => ({ type: s.type, rounds: s.rounds - 1, power: s.power })).filter(s => s.rounds > 0);
-  return { stunned };
+  const snap = statusSnapshot(u);
+  for (const a of burnActs) a.statusChanges = { [u.id]: snap }; // post-tick durations
+  return { stunned, snap };
 }
 export function resolveSkirmish(runMech, enemyDefs, seed, prebuff, assistSpec) {
   const rng = mulberry32(seed >>> 0);
@@ -147,7 +153,7 @@ export function resolveSkirmish(runMech, enemyDefs, seed, prebuff, assistSpec) {
       const st = tickStatus(u, round, flat);          // burn ticks / emp stun
       if (!unitAlive(P)) { result = 'lose'; break; }
       if (aliveArr(Es).length === 0) { result = 'win'; break; }
-      if (st.stunned) { flat.push({ round, actorId: u.id, actorName: u.name, actorSide: u.side, abilityName: 'STUNNED', kind: 'stunned', type: 'stunned', targets: [] }); continue; }
+      if (st.stunned) { flat.push({ round, actorId: u.id, actorName: u.name, actorSide: u.side, abilityName: 'STUNNED', kind: 'stunned', type: 'stunned', targets: [], statusChanges: { [u.id]: st.snap } }); continue; }
       const foes = u.side === 'player' ? aliveArr(Es) : (unitAlive(P) ? [P] : []);
       if (foes.length === 0) continue;
       u.guard = 0;
@@ -203,7 +209,10 @@ function applyAbility(u, A, foes, rng, round, mult) {
       const part = choosePart(A.pt, t);
       const raw = base * (A.targeting === 'multi' ? MULTI_MULT : 1);
       const res = applyDamage(t, part, raw, rng);
-      if (A.status && res.value > 0 && !res.killed) { addStatus(t, A.status); res.appliedStatus = A.status.type; }
+      if (A.status && res.value > 0 && !res.killed) {
+        addStatus(t, A.status); res.appliedStatus = A.status.type;
+        (act.statusChanges || (act.statusChanges = {}))[t.id] = statusSnapshot(t);
+      }
       act.targets.push(Object.assign({ name: t.name, partLabel: part ? part.label : null }, res));
     }
   } else if (A.type === 'heal') {

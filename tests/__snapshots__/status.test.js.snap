@@ -12,7 +12,7 @@ exports[`status weapons — golden logs > INFERNO Jet vs Line Mech 1`] = `
   "trace": [
     "R1 P Incinerate -> E0(burn) -34=116",
     "R1 P Riposte -> E0 -44=72",
-    "R1 E0 Burn -> E0(burn) -6=66",
+    "R1 E0 Burn -> E0 -6=66",
     "R1 E0 Rifle -> P -28=162",
     "R1 E0 Missile -> P -38=124",
     "R2 P Incinerate -> E0(burn) -36=30",

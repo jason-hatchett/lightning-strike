@@ -103,6 +103,24 @@ describe('status-inflicting enemies (ARC EMITTER / PYRO DRONE)', () => {
   });
 });
 
+describe('status durations exposed to the UI (statusChanges)', () => {
+  const of = (a, id) => a.statusChanges && a.statusChanges[id];
+  it('an applied burn reports its full remaining duration, then decays on each tick', () => {
+    const log = resolveSkirmish(mech({ head: 'owl', core: 'runner', rarm: 'flamer', larm: 'saber', backpack: 'thrust', legs: 'sprint' }), enemies(['tank']), 3);
+    const applied = log.flat.find(a => a.abilityName === 'Incinerate' && of(a, 'E0'));
+    expect(of(applied, 'E0')).toContainEqual({ type: 'burn', rounds: 3 });      // fresh application
+    const decayed = log.flat.some(a => a.abilityName === 'Burn' && (of(a, 'E0') || []).some(s => s.type === 'burn' && s.rounds < 3));
+    expect(decayed).toBe(true);                                                  // ticked down
+  });
+  it('an applied EMP reports 1 round, and the stun entry shows it expired', () => {
+    const log = resolveSkirmish(mech({ head: 'hawkeye', core: 'bastion', rarm: 'tesla', larm: 'shieldarm', backpack: 'shpack', legs: 'tread' }), enemies(['bruiser']), 9);
+    const applied = log.flat.find(a => a.abilityName === 'EMP Lance' && of(a, 'E0'));
+    expect(of(applied, 'E0')).toContainEqual({ type: 'emp', rounds: 1 });
+    const stun = log.flat.find(a => a.kind === 'stunned' && a.actorId === 'E0');
+    expect((of(stun, 'E0') || []).some(s => s.type === 'emp')).toBe(false);      // consumed on the stun
+  });
+});
+
 // Golden logs for the new status weapons — lock their behaviour like the base sim.
 describe('status weapons — golden logs', () => {
   const digest = log => ({

@@ -22,9 +22,10 @@ Follow-ups:
       Covered by tests + a mission-integrity invariant. *(2026-08-24)*
 - [ ] **Status-aware tactics** — firing conditions that read status, e.g.
       `when-enemy-stunned` / `target-burning`.
-- [ ] **Persistent status badge** on combat cards (currently shown via float
-      text + banner only; a live "🔥3 / ⚡EMP" pip would need the sim to emit
-      status apply/expire events the UI can track).
+- [x] **Persistent status badge** on combat cards — the sim now emits
+      `statusChanges` (per-unit active statuses + remaining rounds) on apply/tick,
+      and the cutscene renders live pips (🔥/⚡ with a countdown) that tick down
+      and clear on expiry. *(2026-08-24)*
 
 ## Art (Phase 5) — deferred
 

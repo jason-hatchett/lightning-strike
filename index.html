@@ -209,6 +209,12 @@
   .ucard.enemy .usprite{background:radial-gradient(60px 26px at 50% 78%,rgba(255,59,75,.10),transparent 70%)}
   .ucard .un{font-weight:700;font-size:13px;display:flex;justify-content:space-between;align-items:baseline}
   .ucard .utype{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+  .statusrow{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px;min-height:0;empty-cells:hide}
+  .statusrow:empty{margin-top:0}
+  .statusrow .spip{font-size:10px;font-weight:800;letter-spacing:.03em;padding:1px 6px;border-radius:9px;border:1px solid;line-height:1.5;animation:spipIn .18s ease-out}
+  .statusrow .spip.burn{color:#ffb46b;border-color:rgba(255,138,62,.55);background:rgba(255,138,62,.14)}
+  .statusrow .spip.emp{color:var(--cyan);border-color:rgba(34,224,255,.55);background:rgba(34,224,255,.12)}
+  @keyframes spipIn{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
   .ucard .corebar{height:11px;border:1px solid var(--line);border-radius:2px;background:#0a1120;position:relative;overflow:hidden;margin-top:7px}
   .ucard .corefill{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,#2a7d3a,var(--lime));transition:width .3s ease}
   .ucard.enemy .corefill{background:linear-gradient(90deg,#7d2a4a,var(--mag))}

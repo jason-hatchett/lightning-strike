@@ -17,7 +17,8 @@ export const CONDITIONS = {
 export const PART_TARGETS = { 'core': 'Part: Core (kill)', 'weapon': 'Part: Weapon (disable)', 'backpack': 'Part: Backpack' };
 
 /* ability builders. o.assist marks an attack that can be lent to an adjacent lane. */
-export function atk(name, power, o = {}) { return { name, type: 'attack', power, targeting: o.targeting || 'single', cooldown: o.cd || 0, condition: o.cond || 'always', partTarget: o.part || 'core', assist: !!o.assist }; }
+// o.status = {type:'burn'|'emp', rounds, power} lets an attack apply a status effect on hit.
+export function atk(name, power, o = {}) { return { name, type: 'attack', power, targeting: o.targeting || 'single', cooldown: o.cd || 0, condition: o.cond || 'always', partTarget: o.part || 'core', assist: !!o.assist, status: o.status || null }; }
 export function sup(name, type, power, o = {}) { return { name, type, power, targeting: o.targeting || 'self', cooldown: o.cd || 0, condition: o.cond || 'always', partTarget: 'core', assist: !!o.assist }; }
 
 /* ---------- MOBILITY / TERRAIN ---------- */
@@ -59,6 +60,9 @@ export const PARTS = [
   { id: 'vulcan', slot: 'rarm', name: 'VULCAN Rifle', arch: 'kinetic', stats: S({ firepower: 15 }), ability: atk('Burst Fire', 18, { cd: 0, assist: true }), broken: atk('Single Bolt', 6, { cd: 0 }) },
   { id: 'plasma', slot: 'rarm', name: 'PLASMA Blade', arch: 'energy', stats: S({ firepower: 24, speed: 2 }), ability: atk('Overhead Slash', 44, { cd: 2, assist: true }), broken: atk('Pistol-Whip', 12, { cd: 0 }) },
   { id: 'gatling', slot: 'rarm', name: 'GATLING Arm', arch: 'kinetic', stats: S({ firepower: 12 }), ability: atk('Suppress', 15, { targeting: 'multi', cd: 1, cond: 'when-2plus-enemies', assist: true }), broken: atk('Jammed Shot', 5, { cd: 0 }) },
+  // --- status-effect weapons (Phase 6 mechanics) ---
+  { id: 'tesla', slot: 'rarm', name: 'TESLA Lance', arch: 'energy', stats: S({ firepower: 10, charge: 0.4 }), ability: atk('EMP Lance', 14, { cd: 2, status: { type: 'emp', rounds: 1 }, assist: true }), broken: atk('Static Jab', 5, { cd: 0 }) },
+  { id: 'flamer', slot: 'rarm', name: 'INFERNO Jet', arch: 'explosive', stats: S({ firepower: 8 }), ability: atk('Incinerate', 12, { status: { type: 'burn', rounds: 3, power: 6 }, assist: true }), broken: atk('Sputter Flame', 4, { cd: 0 }) },
   // L-ARM (weapon or shield)
   { id: 'saber', slot: 'larm', name: 'SABER', arch: 'energy', stats: S({ firepower: 14, speed: 2 }), ability: atk('Riposte', 26, { cd: 1, assist: true }), broken: atk('Clumsy Jab', 8, { cd: 0 }) },
   { id: 'shieldarm', slot: 'larm', name: 'SHIELD Arm', arch: 'shield', alsoFits: ['backpack'], stats: S({ integrity: 40, armor: 18 }), ability: sup('Raise Guard', 'defense', 34, { cd: 1, cond: 'when-self-below-50' }) },

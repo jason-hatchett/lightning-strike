@@ -77,7 +77,7 @@ function renderParts(){
     const eq=lo[slot]===p.id;const card=el('div','part'+(eq?' equipped':''));
     const cross=p.slot!==slot?`<span class="cross">↔ ${SLOT_LABEL[p.slot]}</span>`:(p.alsoFits?`<span class="cross">↔ ${p.alsoFits.map(s=>SLOT_LABEL[s]).join('/')}</span>`:'');
     let abil='<div class="abil ai">Passive — flat stats only</div>';
-    if(p.ability){abil=`<div class="abil">◈ ${p.ability.name} <span class="ai">· ${p.ability.type}${p.ability.type==='attack'?' · pow '+p.ability.power:''}${p.ability.targeting==='multi'?' · multi':''}${p.ability.cooldown?' · cd'+p.ability.cooldown:''}${p.ability.assist?' · ⟲ assist':''}</span></div>`;
+    if(p.ability){abil=`<div class="abil">◈ ${p.ability.name} <span class="ai">· ${p.ability.type}${p.ability.type==='attack'?' · pow '+p.ability.power:''}${p.ability.targeting==='multi'?' · multi':''}${p.ability.cooldown?' · cd'+p.ability.cooldown:''}${p.ability.status?' · '+(p.ability.status.type==='emp'?('⚡ stun '+p.ability.status.rounds):('🔥 burn '+p.ability.status.power+'×'+p.ability.status.rounds)):''}${p.ability.assist?' · ⟲ assist':''}</span></div>`;
       if(p.broken)abil+=`<div class="abil broken">✕ if disabled → <b>${p.broken.name}</b> (pow ${p.broken.power})</div>`;}
     const tagline=p.tags?`<div class="tagline2">▸ mobility: ${p.tags.map(t=>MOB_LABEL[t]).join(' + ')}</div>`:'';
     card.innerHTML=`<span class="arch">${p.arch}</span>${cross}<div class="pn">${p.name}</div>${abil}${tagline}<div class="chips">${chips(p)}</div>`;
@@ -438,10 +438,11 @@ function playCutscene(log,node,li,assistFrom){
     const c=d.parts[Object.keys(d.parts).find(k=>d.parts[k].isCore)];return c&&c.hp<=0;}
   function floatNum(id,txt,color){const c=refs[id];if(!c)return;const f=el('span','float',txt);f.style.color=color;c.appendChild(f);setTimeout(()=>f.remove(),1000);}
   function applyAction(a,instant){
-    if(!instant){Object.values(refs).forEach(c=>c.classList.remove('acting'));refs[a.actorId]&&refs[a.actorId].classList.add('acting');
+    const realAct=a.kind!=='status'&&a.kind!=='stunned'; // burn/stun ticks aren't the actor "acting"
+    if(!instant){Object.values(refs).forEach(c=>c.classList.remove('acting'));if(realAct)refs[a.actorId]&&refs[a.actorId].classList.add('acting');
       $('#banner').innerHTML=`<span class="rd">R${a.round}</span>${a.actorName} ▸ ${a.abilityName}${a.broken?' <span style="color:var(--red)">(degraded)</span>':''}`;
       for(const id in sprState){const s=sprState[id];if(s.tags)s.tags={};}
-      const as=sprState[a.actorId];if(as&&as.tags){const w=as.loadout.rarm?'rarm':(as.loadout.larm?'larm':'core');as.tags[w]='act';drawUnitSprite(a.actorId);}}
+      if(realAct){const as=sprState[a.actorId];if(as&&as.tags){const w=as.loadout.rarm?'rarm':(as.loadout.larm?'larm':'core');as.tags[w]='act';drawUnitSprite(a.actorId);}}}
     for(const t of a.targets){const d=disp[t.unitId];if(!d)continue;
       if(t.heal){if(d.mono)d.hp=t.hpAfter;else d.parts[t.partKey].hp=t.hpAfter;}
       else if(t.revived){d.parts[t.partKey].hp=t.hpAfter;d.parts[t.partKey].disabled=false;}
@@ -459,10 +460,12 @@ function playCutscene(log,node,li,assistFrom){
         else if(t.blocked){txt='BLOCK';col='var(--violet)';}
         else{txt='-'+t.value+(t.partLabel&&!d.mono?' '+t.partLabel:'');col='var(--red)';}
         floatNum(t.unitId,txt,col);
-        if(t.disabled&&!t.heal&&!t.revived)setTimeout(()=>floatNum(t.unitId,d.parts&&d.parts[t.partKey]&&d.parts[t.partKey].isWeapon?'DEGRADED!':'DISABLED!','var(--amber)'),240);}
+        if(t.disabled&&!t.heal&&!t.revived)setTimeout(()=>floatNum(t.unitId,d.parts&&d.parts[t.partKey]&&d.parts[t.partKey].isWeapon?'DEGRADED!':'DISABLED!','var(--amber)'),240);
+        if(t.appliedStatus)setTimeout(()=>floatNum(t.unitId,t.appliedStatus==='emp'?'STUNNED! ⚡':'BURNING! 🔥',t.appliedStatus==='emp'?'var(--cyan)':'var(--amber)'),260);}
     }
     if(!instant&&a.kind==='guard')floatNum(a.actorId,'GUARD ▲','var(--violet)');
     if(!instant&&a.kind==='buff')floatNum(a.actorId,'FP +'+a.value,'var(--amber)');
+    if(!instant&&a.kind==='stunned')floatNum(a.actorId,'STUNNED ⚡','var(--cyan)');
   }
   let i=0,timer=null;
   function finish(){Object.values(refs).forEach(c=>c.classList.remove('acting'));$('#banner').innerHTML='&nbsp;';

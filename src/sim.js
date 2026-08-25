@@ -25,13 +25,13 @@ export function buildPlayerSimUnit(runMech) {
     parts.push(part);
   }
   const d = runMech.derived;
-  return { id: 'P', side: 'player', name: runMech.name, type: 'mech', mono: false, armor: d.armor, speed: d.speed, firepower: d.firepower, guard: 0, cds: {}, parts, hasAssist: false, sprite: { loadout: runMech.loadout, scheme: runMech.scheme || 'Vanguard' } };
+  return { id: 'P', side: 'player', name: runMech.name, type: 'mech', mono: false, armor: d.armor, speed: d.speed, firepower: d.firepower, guard: 0, cds: {}, status: [], parts, hasAssist: false, sprite: { loadout: runMech.loadout, scheme: runMech.scheme || 'Vanguard' } };
 }
 export function buildAssistSimUnit(spec) {
   // a lent unit: one attack, side player, never targeted (enemies aim only at P), never dies.
   return {
     id: 'A', side: 'player', name: spec.name + ' ⟲', type: 'assist', mono: true, hp: 9999, maxHp: 9999,
-    armor: 0, speed: spec.speed, firepower: spec.firepower, guard: 0, cds: {}, isAssist: true,
+    armor: 0, speed: spec.speed, firepower: spec.firepower, guard: 0, cds: {}, status: [], isAssist: true,
     abilities: [Object.assign({}, spec.ability, { key: 'a0', cond: 'always', pt: 'core' })]
   };
 }
@@ -40,7 +40,7 @@ export function buildEnemySimUnit(def, idx) {
   if (def.mono) {
     return {
       id, side: 'enemy', name: def.name, type: def.type, mono: true, armor: def.armor, speed: def.speed, firepower: def.firepower,
-      hp: def.hp, maxHp: def.hp, guard: 0, cds: {}, sprite: def.sprite,
+      hp: def.hp, maxHp: def.hp, guard: 0, cds: {}, status: [], sprite: def.sprite,
       abilities: def.abilities.map((a, i) => Object.assign({}, a, { key: 'm' + i, cond: a.condition, pt: a.partTarget || 'core' }))
     };
   }
@@ -49,20 +49,20 @@ export function buildEnemySimUnit(def, idx) {
     ability: p.ability ? Object.assign({}, p.ability) : null, broken: p.broken ? Object.assign({}, p.broken) : null,
     cond: p.ability ? p.ability.condition : 'always', pt: p.ability ? (p.ability.partTarget || 'core') : 'core'
   }));
-  return { id, side: 'enemy', name: def.name, type: def.type, mono: false, armor: def.armor, speed: def.speed, firepower: def.firepower, guard: 0, cds: {}, parts, sprite: def.sprite };
+  return { id, side: 'enemy', name: def.name, type: def.type, mono: false, armor: def.armor, speed: def.speed, firepower: def.firepower, guard: 0, cds: {}, status: [], parts, sprite: def.sprite };
 }
 const corePart = u => u.parts && u.parts.find(p => p.isCore);
 const unitAlive = u => u.isAssist ? true : (u.mono ? u.hp > 0 : (corePart(u) ? corePart(u).hp > 0 : false));
 function coreFrac(u) { if (u.mono) return u.hp / u.maxHp; const c = corePart(u); return c ? c.hp / c.maxHp : 0; }
 function activeAbilities(u) {
-  if (u.mono) return u.abilities.map(a => ({ src: a, key: a.key, name: a.name, type: a.type, power: a.power, targeting: a.targeting, cooldown: a.cooldown, cond: a.cond, pt: a.pt, broken: false }));
+  if (u.mono) return u.abilities.map(a => ({ src: a, key: a.key, name: a.name, type: a.type, power: a.power, targeting: a.targeting, cooldown: a.cooldown, cond: a.cond, pt: a.pt, status: a.status || null, broken: false }));
   const out = [];
   for (const part of u.parts) {
     if (part.disabled) {
-      if (part.isWeapon && part.broken) out.push({ src: part.broken, key: part.key, name: part.broken.name, type: 'attack', power: part.broken.power, targeting: part.broken.targeting || 'single', cooldown: part.broken.cooldown || 0, cond: part.cond, pt: part.pt, broken: true });
+      if (part.isWeapon && part.broken) out.push({ src: part.broken, key: part.key, name: part.broken.name, type: 'attack', power: part.broken.power, targeting: part.broken.targeting || 'single', cooldown: part.broken.cooldown || 0, cond: part.cond, pt: part.pt, status: part.broken.status || null, broken: true });
       continue;
     }
-    if (part.ability) out.push({ src: part.ability, key: part.key, name: part.ability.name, type: part.ability.type, power: part.ability.power, targeting: part.ability.targeting, cooldown: part.ability.cooldown, cond: part.cond, pt: part.pt, broken: false });
+    if (part.ability) out.push({ src: part.ability, key: part.key, name: part.ability.name, type: part.ability.type, power: part.ability.power, targeting: part.ability.targeting, cooldown: part.ability.cooldown, cond: part.cond, pt: part.pt, status: part.ability.status || null, broken: false });
   }
   return out;
 }
@@ -90,6 +90,39 @@ function choosePart(ptId, target) {
   else if (ptId === 'backpack') p = target.parts.find(x => x.key === 'backpack' && !x.disabled);
   return p || corePart(target);
 }
+// Add or refresh a status effect on a unit (longer duration / stronger power wins).
+function addStatus(target, s) {
+  if (!target.status) target.status = [];
+  const ex = target.status.find(x => x.type === s.type);
+  if (ex) { ex.rounds = Math.max(ex.rounds, s.rounds); ex.power = Math.max(ex.power || 0, s.power || 0); }
+  else target.status.push({ type: s.type, rounds: s.rounds, power: s.power || 0 });
+}
+// Resolve a unit's active statuses at the start of its turn: burn deals flat (no-rng,
+// deterministic) damage; emp flags a skipped action. Returns {stunned}. Ticks emit a
+// log entry so the cutscene can show them. Runs only when the unit has statuses, so
+// status-free fights are byte-identical to before.
+function tickStatus(u, round, flat) {
+  if (!u.status || !u.status.length) return { stunned: false };
+  let stunned = false;
+  for (const s of u.status) {
+    if (s.type === 'emp') { stunned = true; }
+    else if (s.type === 'burn') {
+      const part = u.mono ? null : corePart(u);
+      const dealt = s.power;
+      let hpAfter;
+      if (u.mono) { u.hp = Math.max(0, u.hp - dealt); hpAfter = u.hp; }
+      else { part.hp = Math.max(0, part.hp - dealt); hpAfter = part.hp; }
+      const disabled = !u.mono && part.hp <= 0;
+      const killed = u.mono ? u.hp <= 0 : (part.isCore && part.hp <= 0);
+      flat.push({
+        round, actorId: u.id, actorName: u.name, actorSide: u.side, abilityName: 'Burn', kind: 'status', type: 'status',
+        targets: [{ unitId: u.id, partKey: part ? part.key : 'core', partLabel: part ? part.label : null, name: u.name, value: dealt, hpAfter, blocked: false, disabled, killed, appliedStatus: 'burn' }]
+      });
+    }
+  }
+  u.status = u.status.map(s => ({ type: s.type, rounds: s.rounds - 1, power: s.power })).filter(s => s.rounds > 0);
+  return { stunned };
+}
 export function resolveSkirmish(runMech, enemyDefs, seed, prebuff, assistSpec) {
   const rng = mulberry32(seed >>> 0);
   const P = buildPlayerSimUnit(runMech);
@@ -111,6 +144,10 @@ export function resolveSkirmish(runMech, enemyDefs, seed, prebuff, assistSpec) {
     const order = aliveArr(all()).slice().sort((a, b) => (b.speed - a.speed) || (a.side === 'player' ? -1 : 1));
     for (const u of order) {
       if (!unitAlive(u)) continue;
+      const st = tickStatus(u, round, flat);          // burn ticks / emp stun
+      if (!unitAlive(P)) { result = 'lose'; break; }
+      if (aliveArr(Es).length === 0) { result = 'win'; break; }
+      if (st.stunned) { flat.push({ round, actorId: u.id, actorName: u.name, actorSide: u.side, abilityName: 'STUNNED', kind: 'stunned', type: 'stunned', targets: [] }); continue; }
       const foes = u.side === 'player' ? aliveArr(Es) : (unitAlive(P) ? [P] : []);
       if (foes.length === 0) continue;
       u.guard = 0;
@@ -165,7 +202,9 @@ function applyAbility(u, A, foes, rng, round, mult) {
     for (const t of tgts) {
       const part = choosePart(A.pt, t);
       const raw = base * (A.targeting === 'multi' ? MULTI_MULT : 1);
-      act.targets.push(Object.assign({ name: t.name, partLabel: part ? part.label : null }, applyDamage(t, part, raw, rng)));
+      const res = applyDamage(t, part, raw, rng);
+      if (A.status && res.value > 0 && !res.killed) { addStatus(t, A.status); res.appliedStatus = A.status.type; }
+      act.targets.push(Object.assign({ name: t.name, partLabel: part ? part.label : null }, res));
     }
   } else if (A.type === 'heal') {
     const cand = u.parts ? u.parts.filter(p => !p.disabled && p.hp < p.maxHp) : [];

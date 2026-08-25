@@ -4,6 +4,27 @@ Running list of follow-ups intentionally deferred. Newest context at top of each
 section. See [MVP-SPEC.md](../MVP-SPEC.md) for the phase plan and
 [docs/art-spec.md](art-spec.md) for the art contract.
 
+## Mechanics (Phase 6) — status effects
+
+Landed 2026-08-24: a deterministic status-effect system in the sim
+(`burn` DoT, `emp` stun), applied by an optional `status` rider on attacks, plus
+two opt-in weapons — `tesla` (TESLA Lance, EMP) and `flamer` (INFERNO Jet, burn).
+Status-free fights stay byte-identical, so all prior golden snapshots are
+unchanged. Covered by `tests/status.test.js`.
+
+Follow-ups:
+- [ ] **Sprites for `tesla` + `flamer`** (art, parked) — new r-arm ids have no
+      sprite yet, so that layer is absent in the garage/combat. Add via the
+      Spartan pipeline when art resumes.
+- [ ] **Enemy that inflicts status** — e.g. an EMP turret / pyro drone (test
+      fixtures `arc` / `pyro` already exist in status.test.js) wired into a
+      mission, so players encounter the mechanic from the other side.
+- [ ] **Status-aware tactics** — firing conditions that read status, e.g.
+      `when-enemy-stunned` / `target-burning`.
+- [ ] **Persistent status badge** on combat cards (currently shown via float
+      text + banner only; a live "🔥3 / ⚡EMP" pip would need the sim to emit
+      status apply/expire events the UI can track).
+
 ## Art (Phase 5) — deferred
 
 Context: the Spartan/gunmetal sprite catalog + renderer landed 2026-08-24

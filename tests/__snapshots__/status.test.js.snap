@@ -1,0 +1,52 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`status weapons — golden logs > INFERNO Jet vs Line Mech 1`] = `
+{
+  "actions": 7,
+  "coreAfter": 124,
+  "kinds": {
+    "act": 6,
+    "status": 1,
+  },
+  "result": "win",
+  "trace": [
+    "R1 P Incinerate -> E0(burn) -34=116",
+    "R1 P Riposte -> E0 -44=72",
+    "R1 E0 Burn -> E0(burn) -6=66",
+    "R1 E0 Rifle -> P -28=162",
+    "R1 E0 Missile -> P -38=124",
+    "R2 P Incinerate -> E0(burn) -36=30",
+    "R2 P Riposte -> E0 -50=0x",
+  ],
+}
+`;
+
+exports[`status weapons — golden logs > TESLA Lance vs Bruiser 1`] = `
+{
+  "actions": 15,
+  "coreAfter": 179,
+  "kinds": {
+    "act": 12,
+    "buff": 1,
+    "stunned": 2,
+  },
+  "result": "win",
+  "trace": [
+    "R1 E0 Hammer -> P -19=36",
+    "R1 P Lock-On -> ",
+    "R1 P EMP Lance -> E0(emp) -39=146",
+    "R2 E0 STUNNED -> ",
+    "R3 E0 Hammer -> P -21=15",
+    "R3 P EMP Lance -> E0(emp) -41=105",
+    "R4 E0 STUNNED -> ",
+    "R5 E0 Hammer -> P -19=0x",
+    "R5 P Static Jab -> E0 -33=72",
+    "R6 E0 Hammer -> P -22=218",
+    "R6 P Static Jab -> E0 -30=42",
+    "R7 E0 Hammer -> P -19=199",
+    "R7 P Static Jab -> E0 -29=13",
+    "R8 E0 Hammer -> P -20=179",
+    "R8 P Static Jab -> E0 -27=0x",
+  ],
+}
+`;

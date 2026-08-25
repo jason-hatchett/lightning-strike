@@ -16,9 +16,10 @@ Follow-ups:
 - [ ] **Sprites for `tesla` + `flamer`** (art, parked) — new r-arm ids have no
       sprite yet, so that layer is absent in the garage/combat. Add via the
       Spartan pipeline when art resumes.
-- [ ] **Enemy that inflicts status** — e.g. an EMP turret / pyro drone (test
-      fixtures `arc` / `pyro` already exist in status.test.js) wired into a
-      mission, so players encounter the mechanic from the other side.
+- [x] **Enemy that inflicts status** — `arc` (ARC EMITTER, EMP) and `pyro`
+      (PYRO DRONE, burn) added to `EN`, wired into mission **SCORCHED EARTH**
+      (id 6). Reuse the turret/bot mono sprites for now (see art follow-up).
+      Covered by tests + a mission-integrity invariant. *(2026-08-24)*
 - [ ] **Status-aware tactics** — firing conditions that read status, e.g.
       `when-enemy-stunned` / `target-burning`.
 - [ ] **Persistent status badge** on combat cards (currently shown via float

@@ -132,6 +132,9 @@ export const EN = {
   turret: { name: 'TURRET NEST', type: 'trap', mono: true, armor: 22, speed: 20, firepower: 0, hp: 120, abilities: [atk('Auto-Turret', 15, { cd: 0, part: 'core' })], sprite: { mono: 'turret' } },
   tank: { name: 'SIEGE TANK', type: 'tank', mono: true, armor: 55, speed: 6, firepower: 8, hp: 260, abilities: [atk('Siege Gun', 18, { cd: 1, part: 'core' })], sprite: { mono: 'tank' } },
   bot: { name: 'MINI-BOT', type: 'swarm', mono: true, armor: 0, speed: 12, firepower: 8, hp: 40, abilities: [atk('Zap', 10, { cd: 0, part: 'core' })], sprite: { mono: 'bot' } },
+  // --- status-inflicting enemies (Phase 6) — reuse mono sprites until bespoke art lands ---
+  arc: { name: 'ARC EMITTER', type: 'trap', mono: true, armor: 16, speed: 14, firepower: 6, hp: 150, abilities: [atk('EMP Burst', 10, { cd: 2, part: 'core', status: { type: 'emp', rounds: 1 } })], sprite: { mono: 'turret' } },
+  pyro: { name: 'PYRO DRONE', type: 'swarm', mono: true, armor: 0, speed: 24, firepower: 5, hp: 70, abilities: [atk('Firebomb', 6, { cd: 1, part: 'core', status: { type: 'burn', rounds: 2, power: 5 } })], sprite: { mono: 'bot' } },
   scrap: { name: 'SCRAP MECH', type: 'mech', armor: 6, speed: 8, firepower: 8, parts: [pcore(130), pweapon(45, 'Rusty Cannon', 16, 'Sputter', 6)], sprite: { loadout: { head: 'hawkeye', core: 'scrap', rarm: 'scrapgun', legs: 'tread' } } },
   line: { name: 'LINE MECH', type: 'mech', armor: 12, speed: 9, firepower: 12, parts: [pcore(150), pweapon(50, 'Rifle', 16, 'Single Bolt', 6), ppart('backpack', 'Backpack', 50, atk('Missile', 26, { cd: 2, part: 'core' }))], sprite: { loadout: { head: 'owl', core: 'bastion', rarm: 'vulcan', larm: 'missarm', backpack: 'fieldkit', legs: 'sprint' } } },
   sniper: { name: 'RAIL SNIPER', type: 'sniper', armor: 10, speed: 15, firepower: 30, parts: [pcore(130), pweapon(48, 'Railshot', 40, 'Bad Shot', 8, { cond: 'target-lowest-integrity' })], sprite: { loadout: { head: 'hawkeye', core: 'runner', rarm: 'gatling', legs: 'sprint' } } },
@@ -181,6 +184,11 @@ export const MISSIONS = [
       { terrain: 'highland', nodes: [SEG('Chasm', 'chasm', ['jump', 'fly'], 34), F('Ridge Sniper', 'Tactics', ['sniper']), F('Bruiser', 'Heavy', ['bruiser'])] },
       { terrain: 'water', nodes: [F('Depths Patrol', 'Medium', ['bot', 'bot', 'line'])] },
     ]
+  },
+  // --- Phase 6 content: status effects on the enemy side ---
+  {
+    id: 6, name: 'SCORCHED EARTH', diff: 3, desc: 'Pyro drones set you ablaze — burn keeps ticking between hits — then an arc emitter stuns your weapon every couple of rounds while a line mech pounds your Core. Bring armor + repair, or burst them down before the fire and static stack up.',
+    lanes: [{ terrain: 'open', nodes: [F('Firestarters', 'Swarm', ['pyro', 'pyro']), F('Arc Line', 'Tactics', ['arc', 'line'])] }]
   },
 ];
 

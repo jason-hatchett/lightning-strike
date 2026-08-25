@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { resolveSkirmish } from '../src/sim.js';
-import { runtimeMech, EN, atk } from '../src/data.js';
+import { runtimeMech, EN, atk, PRESETS, MISSIONS } from '../src/data.js';
 
 // Build a fresh combat mech from a bare loadout.
 const mech = (loadout, name = 'TEST') => runtimeMech({ name, loadout, tactics: {}, partTargets: {} });
@@ -73,6 +73,33 @@ describe('status applied to the player', () => {
     const ticks = burnTicks(log).filter(a => a.actorId === 'P');
     expect(ticks.length).toBeGreaterThan(0);
     for (const t of ticks) expect(t.targets[0].value).toBe(5);
+  });
+});
+
+describe('status-inflicting enemies (ARC EMITTER / PYRO DRONE)', () => {
+  const preset = name => PRESETS.find(p => p.name === name);
+  it('PYRO DRONE burns the player, ticking flat 5 to the core', () => {
+    const log = resolveSkirmish(runtimeMech(preset('ROOK-7')), enemies(['pyro', 'pyro']), 11);
+    const ticks = burnTicks(log).filter(a => a.actorId === 'P');
+    expect(ticks.length).toBeGreaterThan(0);
+    for (const t of ticks) expect(t.targets[0].value).toBe(5);
+  });
+  it('ARC EMITTER stuns the player at least once', () => {
+    const log = resolveSkirmish(runtimeMech(preset('ROOK-7')), enemies(['arc', 'line']), 13);
+    expect(stunActions(log).some(a => a.actorId === 'P')).toBe(true);
+  });
+  it('SCORCHED EARTH is winnable by a tanky build (ROOK-7) with default tactics', () => {
+    // both fights in the mission's single lane, wounds carried over between them
+    const mission = MISSIONS.find(m => m.name === 'SCORCHED EARTH');
+    const run = runtimeMech(preset('ROOK-7'));
+    let anyLoss = false;
+    for (const [i, node] of mission.lanes[0].nodes.entries()) {
+      const log = resolveSkirmish(run, enemies(node.enemies), 6 * 10007 + i * 331 + 17);
+      if (log.result !== 'win') anyLoss = true;
+      // carry part HP into the next fight, like the run does
+      for (const slot in log.playerPartsAfter) run.parts[slot] = { ...log.playerPartsAfter[slot] };
+    }
+    expect(anyLoss).toBe(false);
   });
 });
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { derive, mechTags, canDeploy, partMaxHp, PART, PARTS, EN, PRESETS, partsForSlot, isWeaponPart } from '../src/data.js';
+import { derive, mechTags, canDeploy, partMaxHp, PART, PARTS, EN, PRESETS, partsForSlot, isWeaponPart, MISSIONS } from '../src/data.js';
 
 describe('derive() — stat aggregation', () => {
   it('sums equipped part stats over the base and floors to sane minimums', () => {
@@ -60,5 +60,12 @@ describe('catalog integrity', () => {
       if (def.mono) { expect(def.hp).toBeGreaterThan(0); expect(def.abilities.length).toBeGreaterThan(0); }
       else { expect(def.parts.some(p => p.isCore)).toBe(true); }
     }
+  });
+  it('every mission fight references enemy ids that exist in EN', () => {
+    for (const m of MISSIONS)
+      for (const lane of m.lanes)
+        for (const node of lane.nodes)
+          if (node.kind === 'fight')
+            for (const id of node.enemies) expect(EN[id], `mission "${m.name}" references unknown enemy "${id}"`).toBeTruthy();
   });
 });
